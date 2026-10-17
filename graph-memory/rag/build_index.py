@@ -245,7 +245,7 @@ def main():
                 norm = sum(x * x for x in vec) ** 0.5 or 1.0
                 blob = struct.pack(f"{len(vec)}f", *(x / norm for x in vec))
                 db.execute("INSERT INTO vectors (id, vec) VALUES (?,?)", (rowid, blob))
-            model_line = f"model bge-small-en-v1.5 ({len(vecs[0])}d) + keyword sqlite fts5 via {EMBEDDING_URL}"
+            model_line = f"model EmbeddingGemma-2 ({len(vecs[0])}d multimodal) + keyword sqlite fts5 via {EMBEDDING_URL}"
         except Exception as exc:
             print(f"warning: embedding leg failed ({exc}), falling back to keyword")
 

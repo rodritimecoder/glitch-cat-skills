@@ -1,7 +1,7 @@
 # 🐱 Glitch Cat Autonomous Engineering Suite (`glitch-cat-skills`)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Skills: 6](https://img.shields.io/badge/Skills-6%20Production%20Harnesses-orange.svg)](#-the-6-core-engineering-skills)
+[![Skills: 8](https://img.shields.io/badge/Skills-8%20Production%20Harnesses-orange.svg)](#-the-8-core-engineering-skills)
 [![Architecture: Kem Glitch](https://img.shields.io/badge/Architecture-Kem%20Glitch%20Club-purple.svg)](#-architectural-principles)
 
 A production-grade collection of autonomous AI agent skills implementing the **7-step architecture and engineering principles by Kem (Glitch Cat Club)**. Built for AI coding agents (Claude Code, Antigravity, Roo Code, Pi Agent, and Gemini CLI) to prevent context rot, enforce hard guardrails, orchestrate parallel git worktrees, and self-calibrate token expenditure.
@@ -46,16 +46,18 @@ A production-grade collection of autonomous AI agent skills implementing the **7
 
 ---
 
-## 🛠️ The 6 Core Engineering Skills
+## 🛠️ The 8 Core Engineering Skills
 
-| Skill | Description | Primary CLI Commands |
-| :--- | :--- | :--- |
-| **[`agentic-engineering`](./agentic-engineering/)** | Kem's 7-step autonomous production pipeline: Markdown Kanban, Event Listeners, Fresh-Context Judges, Task Splitters. | `agentic init`, `agentic split`, `agentic listen`, `agentic judge` |
-| **[`state-compactor`](./state-compactor/)** | Context rot shield & long-context protocol. Combines state ledgers with `cgate` AST/JPT-4B symbol reader. | `cgate view`, `cgate outline`, `state-compactor record`, `state-compactor compact` |
-| **[`guard-hooks`](./guard-hooks/)** | Deterministic pre-execution guardrails stopping destructive commands (`rm -rf`, force push, drop table) and protected file mutations. | `guard-hooks run`, `guard-hooks verify` |
-| **[`worktree-harness`](./worktree-harness/)** | Multi-agent parallel Git worktree harness with section claims, quality gates, and automated merge arbitration. | `worktree-harness spawn`, `worktree-harness claim`, `worktree-harness merge` |
-| **[`parallel-test-lane`](./parallel-test-lane/)** | Test lane partitioning: splits sequential-isolated tests from independent parallel worker lanes to slash test runtime. | `parallel-test-lane run --workers 8` |
-| **[`eval-router`](./eval-router/)** | Self-calibrating request router with speculative shadow evaluation and failure harvesting for 30–40% token cost reduction. | `eval-router route`, `eval-router harvest` |
+| Skill | Source Reel | Description | Primary CLI Commands |
+| :--- | :---: | :--- | :--- |
+| **[`projects-harness`](./projects-harness/)** | [`DejvUBotWJD`](https://www.instagram.com/reel/DejvUBotWJD/) | Multi-agent coordination CLI: 3-way routing, dual-provenance envelopes, 200-line memory cap, rule clash detection, queue. | `projects-harness startup`, `projects-harness route`, `projects-harness envelope` |
+| **[`worktree-harness`](./worktree-harness/)** | [`DeZUVT1t5vQ`](https://www.instagram.com/reel/DeZUVT1t5vQ/) | Multi-agent parallel Git worktree harness with section claims, quality gates, and automated merge arbitration. | `worktree-harness spawn`, `worktree-harness claim`, `worktree-harness merge` |
+| **[`agentic-engineering`](./agentic-engineering/)** | [`DehIT3lNgHC`](https://www.instagram.com/reel/DehIT3lNgHC/) | Kem's 7-step autonomous production pipeline: Markdown Kanban, Event Listeners, Fresh-Context Judges, Task Splitters. | `agentic init`, `agentic split`, `agentic listen`, `agentic judge` |
+| **[`guard-hooks`](./guard-hooks/)** | [`DeMSV1jNYem`](https://www.instagram.com/reel/DeMSV1jNYem/) | Deterministic pre-execution guardrails stopping destructive commands (`rm -rf`, force push, drop table) and protected file mutations. | `guard-hooks run`, `guard-hooks verify` |
+| **[`state-compactor`](./state-compactor/)** | [`DdyqnietB8C`](https://www.instagram.com/reel/DdyqnietB8C/) | Context rot shield & long-context protocol. Combines state ledgers with `cgate` AST/JPT-4B symbol reader. | `cgate view`, `cgate outline`, `state-compactor record`, `state-compactor compact` |
+| **[`parallel-test-lane`](./parallel-test-lane/)** | [`DbSgqTXt-3c`](https://www.instagram.com/reel/DbSgqTXt-3c/) | Test lane partitioning: splits sequential-isolated tests from independent parallel worker lanes to slash test runtime. | `parallel-test-lane run --workers 8` |
+| **[`eval-router`](./eval-router/)** | [`DdWLJa2tjq6`](https://www.instagram.com/reel/DdWLJa2tjq6/) | Self-calibrating request router with speculative shadow evaluation and failure harvesting for 30–40% token cost reduction. | `eval-router route`, `eval-router harvest` |
+| **[`graph-memory`](./graph-memory/)** | [`DcTIPKyt7Am`](https://www.instagram.com/reel/DcTIPKyt7Am/) | Anti-hallucination knowledge graph (<2ms SQLite k-hop walk) + hybrid BM25/BGE RRF search and exact-quote LLM distillation. | `python3 graph_memory.py ingest`, `python3 graph_memory.py query` |
 
 ---
 

@@ -81,18 +81,18 @@ def show(db, rowid, position, legs):
         "SELECT file, section, start_line, end_line, text, kind FROM chunks WHERE id=?",
         (rowid,),
     ).fetchone()
-    tag = "📸 [Slide]" if kind == "slide" else ("🎬 [Video]" if kind == "video_transcript" else ("💡 [Distilled]" if kind == "distilled" else "📄 [Note]"))
-    print(f"{position}. {tag} [{file} § {section}]  legs: {'+'.join(legs)}")
+    print(f"{position}. [{file} § {section}]  legs: {'+'.join(legs)}")
     out = []
-    if kind == "distilled" or kind == "slide" or kind == "video_transcript":
+    if kind == "distilled":
         out = text.splitlines()
     else:
         corpus = db.execute("SELECT value FROM meta WHERE key='corpus'").fetchone()
         source = Path(corpus[0]) / file if corpus else HERE.parent / "corpus-before" / file
         if source.is_file():
-            lines = source.read_text(encoding="utf-8", errors="replace").splitlines()
+            lines = source.read_text(encoding="utf-8").splitlines()
             s = max(0, start - 1 - CONTEXT_LINES)
             e = min(len(lines), end + CONTEXT_LINES)
+            # context lines wear a dot; the chunk itself is bare
             out = ["· " + l for l in lines[s : start - 1]]
             out += lines[start - 1 : end]
             out += ["· " + l for l in lines[end:e]]
@@ -137,17 +137,8 @@ def fetch_hit(db, rowid, position, legs):
         if cl and not cl.startswith("source:"):
             first_non_empty = cl
             break
-
-    if kind == "slide":
-        snippet = f"📸 {first_non_empty[:80]}"
-        line_range = f"t={start}s" if start > 0 else "image"
-    elif kind == "video_transcript":
-        snippet = f"🎬 {first_non_empty[:80]}"
-        line_range = f"{start}s-{end}s" if start > 0 else "-"
-    else:
-        snippet = first_non_empty[:85] + "..." if len(first_non_empty) > 85 else first_non_empty
-        line_range = f"{start}-{end}" if start > 0 else "-"
-
+    snippet = first_non_empty[:85] + "..." if len(first_non_empty) > 85 else first_non_empty
+    line_range = f"{start}-{end}" if start > 0 else "-"
     return {
         "rank": position,
         "file": file,
@@ -157,7 +148,6 @@ def fetch_hit(db, rowid, position, legs):
         "snippet": snippet,
         "text": text,
     }
-
 
 
 def utf8_out():

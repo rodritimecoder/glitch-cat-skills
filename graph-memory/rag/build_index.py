@@ -52,13 +52,13 @@ def get_embeddings(texts, endpoint=EMBEDDING_URL, batch_size=8):
                         sub_data = json.loads(sub_resp.read().decode("utf-8"))
                         all_vecs.append(sub_data["data"][0]["embedding"])
                 except Exception:
-                    dummy = [0.0] * 768
+                    # Absolute fallback: dummy normalized vector
+                    dummy = [0.0] * 384
                     dummy[0] = 1.0
                     all_vecs.append(dummy)
         if (i // batch_size) % 25 == 0 or i + batch_size >= total:
             print(f"embedded {min(i + batch_size, total)}/{total} chunks...")
     return all_vecs
-
 
 
 SCHEMA = """
@@ -82,95 +82,30 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 
 
 def note_files(corpus):
+    """Every markdown file under the corpus, subfolders included.
+
+    Skipped: hidden files and folders, .git, node_modules, __pycache__, and
+    this starter's own folder when it has been cloned inside the notes.
+    """
     root = Path(corpus).resolve()
     starter = HERE.parent.resolve()
+    # the starter is skipped only when it sits INSIDE your notes, which is the
+    # case the rule exists for. A corpus inside the starter is the bundled demo
+    # folders, and those are meant to be indexed.
     skip_starter = starter != root and root in starter.parents
     out = []
-    for pattern in ("*.md", "*.vtt"):
-        for path in sorted(root.rglob(pattern)):
-            rel = path.relative_to(root)
-            if any(part.startswith(".") or part in SKIP_DIRS for part in rel.parts):
-                continue
-            if skip_starter and (starter == path.parent or starter in path.parents):
-                continue
-            out.append(path)
-    return sorted(out)
-
-
-def parse_time_to_seconds(ts_str: str) -> int:
-    parts = ts_str.strip("[]").split(":")
-    if len(parts) == 2:
-        return int(parts[0]) * 60 + int(float(parts[1]))
-    elif len(parts) == 3:
-        return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(float(parts[2]))
-    return 0
-
-
-def format_seconds(secs: int) -> str:
-    m, s = divmod(int(secs), 60)
-    h, m = divmod(m, 60)
-    if h > 0:
-        return f"{h:02d}:{m:02d}:{s:02d}"
-    return f"{m:02d}:{s:02d}"
-
-
-def chunk_transcript(path: Path):
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    cues = []
-
-    if path.suffix == ".vtt":
-        current_time = 0
-        current_text = []
-        for line in lines:
-            m = re.match(r"(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\s*-->\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)", line)
-            if m:
-                if current_text:
-                    cues.append((current_time, " ".join(current_text)))
-                    current_text = []
-                current_time = parse_time_to_seconds(m.group(1))
-            elif line.strip() and not line.startswith("WEBVTT") and not line.isdigit():
-                current_text.append(line.strip())
-        if current_text:
-            cues.append((current_time, " ".join(current_text)))
-    else:
-        for line in lines:
-            line_str = line.strip()
-            m = re.search(r"\[(\d{1,2}:\d{2}(?::\d{2})?)\]", line_str)
-            if m:
-                sec = parse_time_to_seconds(m.group(1))
-                cleaned = re.sub(r"^[-*]\s*", "", line_str)
-                cues.append((sec, cleaned))
-
-    if not cues:
-        return chunk_file(path)
-
-    chunks = []
-    buf = []
-    buf_len = 0
-    start_sec = cues[0][0]
-
-    for sec, txt in cues:
-        buf.append((sec, txt))
-        buf_len += len(txt) + 1
-        if buf_len >= 1000 or (sec - start_sec) >= 120:
-            end_sec = sec
-            sec_title = f"Transcript [{format_seconds(start_sec)} - {format_seconds(end_sec)}]"
-            chunk_text = "\n".join(t for _, t in buf)
-            chunks.append((sec_title, start_sec, end_sec, chunk_text))
-            buf = []
-            buf_len = 0
-            start_sec = sec
-
-    if buf:
-        end_sec = buf[-1][0]
-        sec_title = f"Transcript [{format_seconds(start_sec)} - {format_seconds(end_sec)}]"
-        chunk_text = "\n".join(t for _, t in buf)
-        chunks.append((sec_title, start_sec, end_sec, chunk_text))
-
-    return chunks
+    for path in sorted(root.rglob("*.md")):
+        rel = path.relative_to(root)
+        if any(part.startswith(".") or part in SKIP_DIRS for part in rel.parts):
+            continue
+        if skip_starter and (starter == path.parent or starter in path.parents):
+            continue
+        out.append(path)
+    return out
 
 
 def sections(lines):
+    """Split markdown lines into (heading, start, end) sections."""
     out = []
     heading, start = None, 0
     for i, line in enumerate(lines):
@@ -183,7 +118,8 @@ def sections(lines):
 
 
 def chunk_file(path):
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    """Yield (section, start_line, end_line, text) chunks packed to the budget."""
+    lines = path.read_text(encoding="utf-8").splitlines()
     packed = []
     for heading, s, e in sections(lines):
         text = "\n".join(lines[s:e]).strip()
@@ -191,6 +127,7 @@ def chunk_file(path):
         if len(text) <= CHUNK_BUDGET:
             packed.append((title, s + 1, e, text))
             continue
+        # oversized section: split on line groups within the budget
         buf, buf_start = [], s
         for i in range(s, e):
             buf.append(lines[i])
@@ -200,7 +137,6 @@ def chunk_file(path):
         if any(l.strip() for l in buf):
             packed.append((title, buf_start + 1, e, "\n".join(buf).strip()))
     return packed
-
 
 
 def parse_entry(text):
@@ -261,18 +197,13 @@ def main():
     files = note_files(corpus)
     root = corpus.resolve()
     for path in files:
+        # the relative path is the file's name in the index, so a note in a
+        # subfolder can still be read back for context
         rel = path.relative_to(root).as_posix()
-        is_transcript = path.name.endswith("_transcript.md") or path.suffix == ".vtt"
-        if is_transcript:
-            for section, s, e, text in chunk_transcript(path):
-                label = f"[{rel} § {section}]"
-                row = (rel, section, s, e, text, "video_transcript")
-                docs.append((label + "\n" + text, row))
-        else:
-            for section, s, e, text in chunk_file(path):
-                label = f"[{rel} § {section}]"
-                row = (rel, section, s, e, text, "chunk")
-                docs.append((label + "\n" + text, row))
+        for section, s, e, text in chunk_file(path):
+            label = f"[{rel} § {section}]"
+            row = (rel, section, s, e, text, "chunk")
+            docs.append((label + "\n" + text, row))
 
     dropped = 0
     distilled_dir = HERE / "distilled"
@@ -281,6 +212,7 @@ def main():
         entry = parse_distilled(path)
         source = corpus / entry.get("source", "")
         quote = entry.get("quote", "")
+        # grounding check: the quote must appear in the source, word for word
         if not source.is_file() or normalise(quote) not in normalise(source.read_text(encoding="utf-8")):
             dropped += 1
             print(f"dropped {path.name}: quote not found in {entry.get('source', '?')}")
@@ -292,33 +224,6 @@ def main():
         label = f"[{entry['source']} § distilled]"
         row = (entry["source"], "distilled", 0, 0, body, "distilled")
         docs.append((label + "\n" + body, row))
-
-    slide_vecs_map = {}
-    slide_files = [
-        corpus / "slide_vectors.json",
-        corpus / "viz_icm" / "_shared" / "slide_vectors.json",
-        HERE.parent / "slide_vectors.json",
-    ]
-    for sf in slide_files:
-        if sf.is_file():
-            try:
-                slides_data = json.loads(sf.read_text(encoding="utf-8"))
-                for s_item in slides_data:
-                    s_label = s_item.get("label") or Path(s_item["image_path"]).stem
-                    s_course = s_item.get("course", "General")
-                    s_time = s_item.get("timestamp_seconds", 0)
-                    rel = f"slides/{s_item['filename']}"
-                    s_sec = f"Slide: {s_label}"
-                    body = f"[Visual Slide Diagram] {s_label}\nCourse: {s_course}\nTimestamp: {s_time}s\nPath: {s_item.get('image_path', '')}"
-                    label = f"[{rel} § {s_sec}]"
-                    row = (rel, s_sec, s_time, s_time, body, "slide")
-                    docs.append((label + "\n" + body, row))
-                    if "vector" in s_item and len(s_item["vector"]) == 768:
-                        slide_vecs_map[len(docs)] = s_item["vector"]
-                print(f"loaded {len(slides_data)} visual slide vectors from {sf.name}")
-                break
-            except Exception as e:
-                print(f"warning: failed to load slides from {sf}: {e}")
 
     for embed_text, row in docs:
         cur = db.execute(
@@ -332,42 +237,23 @@ def main():
 
     model_line = "keyword only (embedding endpoint unavailable)"
     if not docs:
-        model_line = "nothing to index: no files found under the corpus"
+        model_line = "nothing to index: no markdown found under the corpus"
     else:
         try:
-            texts_to_embed = []
-            text_indices = []
-            for idx, (embed_text, _) in enumerate(docs, start=1):
-                if idx in slide_vecs_map:
-                    continue
-                texts_to_embed.append(embed_text)
-                text_indices.append(idx)
-
-            computed_vecs = get_embeddings(texts_to_embed) if texts_to_embed else []
-            vec_by_rowid = {}
-            for idx, vec in zip(text_indices, computed_vecs):
-                vec_by_rowid[idx] = vec
-            for idx, vec in slide_vecs_map.items():
-                vec_by_rowid[idx] = vec
-
-            for rowid in range(1, len(docs) + 1):
-                vec = vec_by_rowid.get(rowid)
-                if vec:
-                    norm = sum(x * x for x in vec) ** 0.5 or 1.0
-                    blob = struct.pack(f"{len(vec)}f", *(x / norm for x in vec))
-                    db.execute("INSERT INTO vectors (id, vec) VALUES (?,?)", (rowid, blob))
-            sample_dim = len(next(iter(vec_by_rowid.values()))) if vec_by_rowid else 768
-            model_line = f"model EmbeddingGemma-2 ({sample_dim}d multimodal: text+video+slides) + keyword sqlite fts5 via {EMBEDDING_URL}"
+            vecs = get_embeddings([t for t, _ in docs])
+            for rowid, vec in enumerate(vecs, start=1):
+                norm = sum(x * x for x in vec) ** 0.5 or 1.0
+                blob = struct.pack(f"{len(vec)}f", *(x / norm for x in vec))
+                db.execute("INSERT INTO vectors (id, vec) VALUES (?,?)", (rowid, blob))
+            model_line = f"model bge-small-en-v1.5 ({len(vecs[0])}d) + keyword sqlite fts5 via {EMBEDDING_URL}"
         except Exception as exc:
             print(f"warning: embedding leg failed ({exc}), falling back to keyword")
 
     db.commit()
     db.close()
     n_distilled = len(distilled_files) - dropped
-    n_slides = len(slide_vecs_map)
-    print(f"indexed {len(files)} files ({len(docs) - n_distilled - n_slides} text/video chunks, {n_slides} slide keyframes, {n_distilled} distilled entries, {dropped} dropped)")
+    print(f"indexed {len(files)} files, {len(docs) - n_distilled} chunks, {n_distilled} distilled entries, {dropped} dropped")
     print(model_line)
-
 
 
 if __name__ == "__main__":

@@ -73,7 +73,7 @@ echo '{"prompt": "Can Marcus approve the invoice?"}' | graph-memory hook
 
 ### 2. Hybrid RAG & Distillation (Leg 2)
 ```bash
-# Search notes index via hybrid BM25 + EmbeddingGemma-2 (768d multimodal) vector RRF (table output):
+# Search notes index via hybrid BM25 + BGE vector RRF (table output):
 graph-memory search "propagation delay" --table
 
 # Project specific fields and limit hits:

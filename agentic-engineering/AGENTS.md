@@ -23,7 +23,7 @@ Autonomous production pipeline implementing Kem's (Glitch Cat Club) 7-step loop.
 
 ## Not This Workspace
 - Individual code changes: Performed in target project workspaces or worktrees.
-- Local inference port management: Handled in `local-hub` (:8080, :8083, :8085).
+- Local inference port management: Handled in `omnicli` (:8080, :8083, :8085).
 - Code review rubrics: Handled in `review-hub`.
 
 ## Status Rules

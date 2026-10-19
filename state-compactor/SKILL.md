@@ -8,13 +8,12 @@ description: >
   660,000+ token sessions without context poisoning.
 metadata:
   creator: kem_glitch
-  source_reels:
-    - id: DdyqnietB8C
-      url: https://www.instagram.com/reel/DdyqnietB8C/
-      vault_note: kem_glitch/2026-10-16_autonomous_state_file_compaction/notes.md
-    - id: DdME5hsNRju
-      url: https://www.instagram.com/reel/DdME5hsNRju/
-      vault_note: kem_glitch/2026-10-17_memory_context_management_sessions/notes.md
+  source_reels_1_id: DdyqnietB8C
+  source_reels_1_url: https://www.instagram.com/reel/DdyqnietB8C/
+  source_reels_1_vault_note: kem_glitch/2026-10-16_autonomous_state_file_compaction/notes.md
+  source_reels_2_id: DdME5hsNRju
+  source_reels_2_url: https://www.instagram.com/reel/DdME5hsNRju/
+  source_reels_2_vault_note: kem_glitch/2026-10-17_memory_context_management_sessions/notes.md
 ---
 
 # State Compactor & Context Rot Shield — Zero-Degradation Long Context Protocol

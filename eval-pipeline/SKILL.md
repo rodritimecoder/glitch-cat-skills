@@ -7,10 +7,9 @@ description: >
   automated assertion gates.
 metadata:
   creator: kem_glitch
-  source_reel:
-    id: DeHK65INHqh
-    url: https://www.instagram.com/reel/DeHK65INHqh/
-    vault_note: kem_glitch/2026-10-16_eval_pipeline_and_propagation_risk/notes.md
+  source_reel_id: DeHK65INHqh
+  source_reel_url: https://www.instagram.com/reel/DeHK65INHqh/
+  source_reel_vault_note: kem_glitch/2026-10-16_eval_pipeline_and_propagation_risk/notes.md
 ---
 
 # Eval Pipeline (`eval-pipeline`)

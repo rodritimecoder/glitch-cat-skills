@@ -7,10 +7,9 @@ description: >
   and aggregated pass/fail reporting.
 metadata:
   creator: kem_glitch
-  source_reel:
-    id: DbSgqTXt-3c
-    url: https://www.instagram.com/reel/DbSgqTXt-3c/
-    vault_note: kem_glitch/2026-10-17_regression_test_suite_parallel_lanes/notes.md
+  source_reel_id: DbSgqTXt-3c
+  source_reel_url: https://www.instagram.com/reel/DbSgqTXt-3c/
+  source_reel_vault_note: kem_glitch/2026-10-17_regression_test_suite_parallel_lanes/notes.md
 ---
 
 # Parallel Test Lane — AI Blast Radius Containment

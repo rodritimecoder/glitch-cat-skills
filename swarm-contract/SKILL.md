@@ -7,10 +7,9 @@ description: >
   in code before budget overruns.
 metadata:
   creator: kem_glitch
-  source_reel:
-    id: DeW6_fqt-cq
-    url: https://www.instagram.com/reel/DeW6_fqt-cq/
-    vault_note: kem_glitch/2026-10-17_dynamic_agent_swarms_and_contracts/notes.md
+  source_reel_id: DeW6_fqt-cq
+  source_reel_url: https://www.instagram.com/reel/DeW6_fqt-cq/
+  source_reel_vault_note: kem_glitch/2026-10-17_dynamic_agent_swarms_and_contracts/notes.md
 ---
 
 # Swarm Contract (`swarm-contract`)

@@ -8,10 +8,9 @@ description: >
   and continuously harvests failures into training evaluations for 30-40% token cost reduction.
 metadata:
   creator: kem_glitch
-  source_reel:
-    id: DdWLJa2tjq6
-    url: https://www.instagram.com/reel/DdWLJa2tjq6/
-    vault_note: kem_glitch/2026-10-17_self_calibrating_eval_router_and_shadow_verifier/notes.md
+  source_reel_id: DdWLJa2tjq6
+  source_reel_url: https://www.instagram.com/reel/DdWLJa2tjq6/
+  source_reel_vault_note: kem_glitch/2026-10-17_self_calibrating_eval_router_and_shadow_verifier/notes.md
 ---
 
 # Eval Router — Self-Calibrating Router & Speculative Evaluation Harness

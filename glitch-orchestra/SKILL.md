@@ -6,10 +6,9 @@ description: >
   tracking active progress without context dilution, and triggering completion audio chimes.
 metadata:
   creator: kem_glitch
-  source_reel:
-    id: Dd_vZqINEtW
-    url: https://www.instagram.com/reel/Dd_vZqINEtW/
-    vault_note: kem_glitch/2026-10-17_claude_code_mods_and_glitch_orchestra/notes.md
+  source_reel_id: Dd_vZqINEtW
+  source_reel_url: https://www.instagram.com/reel/Dd_vZqINEtW/
+  source_reel_vault_note: kem_glitch/2026-10-17_claude_code_mods_and_glitch_orchestra/notes.md
 ---
 
 # Glitch Orchestra (`glitch-orchestra`)

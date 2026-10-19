@@ -6,10 +6,9 @@ description: >
   Fresh-Context Unbiased Judges, Task Splitters, and multi-model parallel sandboxes.
 metadata:
   creator: kem_glitch
-  source_reel:
-    id: DehIT3lNgHC
-    url: https://www.instagram.com/reel/DehIT3lNgHC/
-    vault_note: kem_glitch/2026-10-16_agentic_engineering_7_step_loop/notes.md
+  source_reel_id: DehIT3lNgHC
+  source_reel_url: https://www.instagram.com/reel/DehIT3lNgHC/
+  source_reel_vault_note: kem_glitch/2026-10-16_agentic_engineering_7_step_loop/notes.md
 ---
 
 # `agentic-engineering` (`agentic`)

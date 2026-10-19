@@ -6,10 +6,9 @@ description: >
   or frontier LLMs, delivering instant answers at $0 token cost for 40-70% of inbound queries.
 metadata:
   creator: kem_glitch
-  source_reel:
-    id: DdbQeb5t2u0
-    url: https://www.instagram.com/reel/DdbQeb5t2u0/
-    vault_note: kem_glitch/2026-10-17_building_a_semantic_cache/notes.md
+  source_reel_id: DdbQeb5t2u0
+  source_reel_url: https://www.instagram.com/reel/DdbQeb5t2u0/
+  source_reel_vault_note: kem_glitch/2026-10-17_building_a_semantic_cache/notes.md
 ---
 
 # Semantic Cache (`semantic-cache`)

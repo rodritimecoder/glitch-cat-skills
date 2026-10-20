@@ -1,0 +1,17 @@
+{
+  "managed": [
+    "agentic-engineering",
+    "eval-pipeline",
+    "eval-router",
+    "glitch-orchestra",
+    "graph-memory",
+    "guard-hooks",
+    "jev-decision",
+    "parallel-test-lane",
+    "projects-harness",
+    "semantic-cache",
+    "state-compactor",
+    "swarm-contract",
+    "worktree-harness"
+  ]
+}

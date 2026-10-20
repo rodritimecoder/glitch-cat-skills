@@ -46,7 +46,10 @@ def test_agentic_pipeline_end_to_end():
         assert res_split.returncode == 0, f"Split failed: {res_split.stderr}"
         plan = json.loads(res_split.stdout)
         assert plan["total_lanes"] == 3
-        assert plan["lanes"][0]["sandbox"] == "sandbox-1"
+        # Lanes are named for the model tier that runs them (lane-1-agy, ...),
+        # not the old positional sandbox-N naming.
+        assert plan["lanes"][0]["sandbox"].startswith("lane-1"), plan["lanes"][0]
+        assert plan["lanes"][0]["model"], plan["lanes"][0]
 
         # Step 6: Full 7-Step Pipeline Run with Judge Approval
         res_run = subprocess.run([sys.executable, str(AGENTIC_PY), "run", "CARD-001", str(target), "--mock-judge", "PASS"], capture_output=True, text=True)

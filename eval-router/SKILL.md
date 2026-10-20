@@ -1,16 +1,21 @@
 ---
 name: eval-router
+
 description: >
   Self-calibrating request router with speculative shadow evaluation and failure harvesting
   (Glitch Cat Club; Reel DdWLJa2tjq6). Classifies prompt complexity (Easy/Moderate/Hard)
-  using local Imajev-4B (:8083) and pure-Python learned weights, dispatches to local zero-cost models
+  using local vllm-d3-mini (:8083) and pure-Python learned weights, dispatches to local zero-cost models
   or free tiers, verifies output quality asynchronously or blocking with automated frontier fallback,
   and continuously harvests failures into training evaluations for 30-40% token cost reduction.
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Requires the local vllm-d3-mini endpoint on :8083. The optional hosted tiers need OPENROUTER_API_KEY and GEMINI_API_KEY."
 metadata:
-  creator: kem_glitch
-  source_reel_id: DdWLJa2tjq6
-  source_reel_url: https://www.instagram.com/reel/DdWLJa2tjq6/
-  source_reel_vault_note: kem_glitch/2026-10-17_self_calibrating_eval_router_and_shadow_verifier/notes.md
+  creator: "kem_glitch"
+  source_reel_id: "DdWLJa2tjq6"
+  source_reel_url: "https://www.instagram.com/reel/DdWLJa2tjq6/"
+  source_reel_vault_note: "kem_glitch/2026-10-17_self_calibrating_eval_router_and_shadow_verifier/notes.md"
+allowed-tools: "Bash(eval-router:*) Bash(python3:*) Read Write"
 ---
 
 # Eval Router — Self-Calibrating Router & Speculative Evaluation Harness
@@ -22,7 +27,7 @@ metadata:
                                │
                                ▼
         ┌──────────────────────────────────────────────┐
-        │   Hybrid Classifier (Imajev-4B :8083 / ML)   │
+        │   Hybrid Classifier (vllm-d3-mini :8083 / ML)   │
         │   p(easy), p(moderate), p(hard) + Confidence │
         └──────┬──────────────────────┬──────────────┬─┘
                │                      │              │
@@ -89,11 +94,11 @@ python3 /run/media/rodri/AI/skills/eval-router/scripts/harvest.py --train
 You can point any coding assistant (Cursor, Claude Code, Cline, OpenCode, Agy) at `eval-router`:
 
 ```bash
-python3 /run/media/rodri/AI/skills/eval-router/scripts/server.py --port 8088
+python3 /run/media/rodri/AI/skills/eval-router/scripts/server.py --port 8100
 ```
 
 Configure your tool:
-- **Base URL**: `http://localhost:8088/v1`
+- **Base URL**: `http://localhost:8100/v1`
 - **Model**: `eval-router-auto`
 - **API Key**: `any-key`
 
@@ -105,7 +110,7 @@ Every request received through `/v1/chat/completions` is automatically classifie
 
 | Component | Target Port | Model / Engine | Role |
 | :--- | :--- | :--- | :--- |
-| **Classifier & Judge** | `:8083` | `Imajev-4B` via `jev-cli` | Calibrated P(true) quality judgement & 3-way triage |
+| **Classifier & Judge** | `:8083` | `vllm-d3-mini` via `jev-decision` | Calibrated P(true) quality judgement & 3-way triage |
 | **Local Zero-Cost Tier** | `:8080` / `:4000` | Qwen3.6-35B Genesis / LiteLLM | Free local execution for Easy tier |
 | **Cloud Free Tier** | OpenRouter Free | Nemotron 3.5 Lightning / Nemotron Ultra | Zero-quota offload |
 | **Frontier Tier** | OpenRouter / Gemini | Claude 3.7 Sonnet / Gemini 2.5 Pro | High-complexity tasks and fallback swaps |

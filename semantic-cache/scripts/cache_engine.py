@@ -10,18 +10,31 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 class LocalEmbedder:
-    def __init__(self, endpoint: str = "http://127.0.0.1:8082/v1/embeddings", timeout: float = 0.5):
+    """Embed against the embedding slot, with a labelled offline fallback.
+
+    The slot at :8087 hosts exactly two candidates -- bge-small-en-v1.5 (384d)
+    and EmbeddingGemma-2 (768d) -- and the offline fallback is a third, 128d
+    hash space. Vectors from different spaces are not comparable, so every
+    embedded row records which space it came from and `get` skips the rest
+    instead of silently scoring them 0.0.
+    """
+
+    def __init__(self, endpoint: str = "http://127.0.0.1:8087/v1/embeddings", timeout: float = 0.5):
         self.endpoint = endpoint
         self.timeout = timeout
+        self.last_source = "unknown"
 
     def embed(self, text: str) -> List[float]:
         clean_text = text.strip()
         try:
-            payload = json.dumps({"input": clean_text, "model": "EmbeddingGemma-2"}).encode("utf-8")
+            # No "model" field: the server owns exactly one loaded model, and
+            # naming one here just goes stale when the slot's candidate swaps.
+            payload = json.dumps({"input": clean_text}).encode("utf-8")
             req = urllib.request.Request(self.endpoint, data=payload, headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 if resp.status == 200:
                     data = json.loads(resp.read().decode("utf-8"))
+                    self.last_source = "endpoint"
                     return data["data"][0]["embedding"]
         except Exception:
             pass
@@ -39,6 +52,7 @@ class LocalEmbedder:
         norm = math.sqrt(sum(x * x for x in vec))
         if norm > 0:
             vec = [x / norm for x in vec]
+        self.last_source = "hash-bow"
         return vec
 
 
@@ -73,20 +87,34 @@ class SemanticCache:
                     last_accessed TEXT NOT NULL
                 )
             """)
+            # Which space each row's vector came from, so a row written by the
+            # offline fallback (or by the other embedding candidate) can never
+            # be scored against a query vector of a different width.
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(semantic_cache)")}
+            for col, decl in (("embedding_source", "TEXT"), ("embedding_dim", "INTEGER")):
+                if col not in cols:
+                    conn.execute(f"ALTER TABLE semantic_cache ADD COLUMN {col} {decl}")
             conn.commit()
 
     def get(self, query: str, threshold: float = 0.85) -> Dict[str, Any]:
         query_vec = self.embedder.embed(query)
+        qdim = len(query_vec)
         best_hit = None
         best_sim = 0.0
+        incompatible = 0
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, query, embedding, answer, hit_count FROM semantic_cache")
+            cursor.execute(
+                "SELECT id, query, embedding, answer, hit_count, embedding_dim FROM semantic_cache"
+            )
             rows = cursor.fetchall()
 
-            for row_id, cached_q, emb_json, ans, hits in rows:
+            for row_id, cached_q, emb_json, ans, hits, row_dim in rows:
                 cached_vec = json.loads(emb_json)
+                if (row_dim or len(cached_vec)) != qdim:
+                    incompatible += 1
+                    continue
                 sim = cosine_similarity(query_vec, cached_vec)
                 if sim > best_sim:
                     best_sim = sim
@@ -113,6 +141,8 @@ class SemanticCache:
             "query": query,
             "best_similarity": round(best_sim, 4),
             "threshold": threshold,
+            "embedding_source": self.embedder.last_source,
+            "skipped_incompatible": incompatible,
         }
 
     def set(self, query: str, answer: str) -> None:
@@ -120,13 +150,20 @@ class SemanticCache:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                INSERT INTO semantic_cache (query, embedding, answer, hit_count, created_at, last_accessed)
-                VALUES (?, ?, ?, 0, ?, ?)
+                INSERT INTO semantic_cache
+                    (query, embedding, answer, hit_count, created_at, last_accessed,
+                     embedding_source, embedding_dim)
+                VALUES (?, ?, ?, 0, ?, ?, ?, ?)
                 ON CONFLICT(query) DO UPDATE SET
                     answer = excluded.answer,
                     embedding = excluded.embedding,
+                    embedding_source = excluded.embedding_source,
+                    embedding_dim = excluded.embedding_dim,
                     last_accessed = excluded.last_accessed
-            """, (query.strip(), json.dumps(query_vec), answer.strip(), now, now))
+            """, (
+                query.strip(), json.dumps(query_vec), answer.strip(), now, now,
+                self.embedder.last_source, len(query_vec),
+            ))
             conn.commit()
 
     def stats(self) -> Dict[str, Any]:

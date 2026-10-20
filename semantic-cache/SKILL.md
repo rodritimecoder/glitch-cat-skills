@@ -1,14 +1,19 @@
 ---
 name: semantic-cache
+
 description: >
   Sub-10ms repeat query bypass and verified response cache for RAG and agent systems (Glitch Cat Club / Kem Glitch;
   Reel DdbQeb5t2u0). Intercepts recurring queries via dense vector cosine similarity before invoking heavy RAG pipelines
   or frontier LLMs, delivering instant answers at $0 token cost for 40-70% of inbound queries.
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Requires the local embedding endpoint on :8087 for the semantic leg."
 metadata:
-  creator: kem_glitch
-  source_reel_id: DdbQeb5t2u0
-  source_reel_url: https://www.instagram.com/reel/DdbQeb5t2u0/
-  source_reel_vault_note: kem_glitch/2026-10-17_building_a_semantic_cache/notes.md
+  creator: "kem_glitch"
+  source_reel_id: "DdbQeb5t2u0"
+  source_reel_url: "https://www.instagram.com/reel/DdbQeb5t2u0/"
+  source_reel_vault_note: "kem_glitch/2026-10-17_building_a_semantic_cache/notes.md"
+allowed-tools: "Bash(python3:*) Read Write"
 ---
 
 # Semantic Cache (`semantic-cache`)

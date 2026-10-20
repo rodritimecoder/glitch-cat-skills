@@ -1,15 +1,20 @@
 ---
 name: parallel-test-lane
+
 description: >
   AI blast radius containment and parallel test runner (Glitch Cat Club; Reel DbSgqTXt-3c).
   Partitions test suites into sequential-isolated vs independent parallel worker lanes across CPU cores,
   slashing 40-60 minute regression suites down to 7-8 minutes with clean non-interleaved output buffering
   and aggregated pass/fail reporting.
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Requires Python 3.10+ and a pytest suite to partition."
 metadata:
-  creator: kem_glitch
-  source_reel_id: DbSgqTXt-3c
-  source_reel_url: https://www.instagram.com/reel/DbSgqTXt-3c/
-  source_reel_vault_note: kem_glitch/2026-10-17_regression_test_suite_parallel_lanes/notes.md
+  creator: "kem_glitch"
+  source_reel_id: "DbSgqTXt-3c"
+  source_reel_url: "https://www.instagram.com/reel/DbSgqTXt-3c/"
+  source_reel_vault_note: "kem_glitch/2026-10-17_regression_test_suite_parallel_lanes/notes.md"
+allowed-tools: "Bash(parallel-test-lane:*) Bash(python3:*) Bash(pytest:*) Read Write"
 ---
 
 # Parallel Test Lane — AI Blast Radius Containment

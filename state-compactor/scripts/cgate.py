@@ -12,8 +12,10 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-JPT_URL = "http://127.0.0.1:8090/v1/chat/completions"
-IMAJEV_URL = "http://127.0.0.1:8083/v1/chat/completions"
+# `query` asks for prose, which the vllm-d3-mini decision model cannot emit --
+# it returns calibrated probabilities, not text. Generative projection therefore
+# belongs to the local-llm skill on :8080 (Qwen3.6-35B Genesis).
+GENERATIVE_URL = "http://127.0.0.1:8080/v1/chat/completions"
 
 def query_local_llm(prompt: str, system_prompt: str = "You are a concise code analyst. Answer directly with minimal tokens and quote only the exact 2-5 relevant lines.", max_tokens: int = 250) -> str:
     payload = {
@@ -26,20 +28,20 @@ def query_local_llm(prompt: str, system_prompt: str = "You are a concise code an
     }
     data = json.dumps(payload).encode("utf-8")
     
-    for url, model_name in [(JPT_URL, "jpt-4b"), (IMAJEV_URL, "imajev-4b")]:
-        try:
-            req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-            with urllib.request.urlopen(req, timeout=8.0) as resp:
-                res = json.loads(resp.read().decode("utf-8"))
-                choice = res.get("choices", [{}])[0]
-                msg = choice.get("message", {})
-                content = msg.get("content", "").strip()
-                if content:
-                    return content
-        except Exception:
-            continue
-            
-    return "Error: Could not reach local decision model on :8090 or :8083."
+    try:
+        req = urllib.request.Request(GENERATIVE_URL, data=data, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=8.0) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+            choice = res.get("choices", [{}])[0]
+            msg = choice.get("message", {})
+            content = msg.get("content", "").strip()
+            if content:
+                return content
+    except Exception:
+        pass
+
+    return ("Error: Could not reach the local LLM on :8080. "
+            "Start it with the `local-llm` skill (`scripts/llm_client.py start`).")
 
 
 def extract_python_symbols(content: str) -> List[Dict[str, Any]]:
@@ -246,7 +248,7 @@ def main() -> int:
     g_p.add_argument("path", nargs="?", default=".", help="Target directory or file (default: .)")
     g_p.add_argument("--limit", type=int, default=3, help="Max hits per file")
 
-    q_p = sub.add_parser("query", help="Ask local JPT-4B (:8090) a question about a file without context bloat")
+    q_p = sub.add_parser("query", help="Ask the local LLM (:8080) a question about a file without context bloat")
     q_p.add_argument("file", help="Path to file")
     q_p.add_argument("question", help="Question about file")
 

@@ -3,6 +3,12 @@
 Reads ../corpus-before by default, plus any distilled entries in distilled/.
 Subfolders are included, so the digest's daily/ folder is indexed like any note.
 Writes rag.db next to this script. Run again any time; the index is disposable.
+
+The embedding slot (:8087) hosts exactly two candidate models -- bge-small
+(384d) and EmbeddingGemma-2 (768d) -- and their vectors are not comparable.
+So the index records which model and dimension built it, in the `meta` table,
+and search.py refuses to compare a query vector of the wrong width. Probe the
+endpoint rather than assuming: the model name is whatever the server reports.
 """
 
 import argparse
@@ -19,46 +25,98 @@ HERE = Path(__file__).resolve().parent
 DB = HERE / "rag.db"
 CHUNK_BUDGET = 1600  # characters, roughly 400 tokens
 SKIP_DIRS = {".git", "node_modules", "__pycache__"}
-EMBEDDING_URL = os.environ.get("EMBEDDING_URL", "http://127.0.0.1:8082/v1/embeddings")
+EMBEDDING_URL = os.environ.get("EMBEDDING_URL", "http://127.0.0.1:8087/v1/embeddings")
 
 
-def get_embeddings(texts, endpoint=EMBEDDING_URL, batch_size=8):
-    """Fetch embeddings via OpenAI-compatible endpoint using urllib."""
-    all_vecs = []
-    total = len(texts)
-    for i in range(0, total, batch_size):
-        batch = texts[i : i + batch_size]
-        # Defensively bound chunk length to prevent 512-token context window overflow
-        batch = [t[:1100] for t in batch]
-        payload = json.dumps({"input": batch}).encode("utf-8")
+class EmbeddingError(RuntimeError):
+    pass
+
+
+def probe_embedding(endpoint=EMBEDDING_URL, timeout=30):
+    """One vector, to learn the model name and the dimension.
+
+    The dimension is the whole point of this call, so it is read from the
+    server rather than assumed. Returns (model, dim).
+    """
+    req = urllib.request.Request(
+        endpoint,
+        data=json.dumps({"input": ["dimension probe"]}).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    items = data.get("data") or []
+    if not items:
+        raise EmbeddingError(f"{endpoint} returned no vectors")
+    model = data.get("model") or endpoint
+    return model, len(items[0]["embedding"])
+
+
+def embed_one(text, endpoint=EMBEDDING_URL, timeout=30, floor=200):
+    """Embed a single chunk, halving the input until the server accepts it.
+
+    The embedding slot runs with a 512-token context, and character count is a
+    poor proxy for tokens: chunk 777 of the University corpus blows the limit at
+    800 characters while chunk 780 is fine at 1100. So shrink on failure rather
+    than pick one bound for every chunk.
+    """
+    limit = len(text)
+    while True:
+        payload = json.dumps({"input": text[:limit]}).encode("utf-8")
         req = urllib.request.Request(
             endpoint, data=payload, headers={"Content-Type": "application/json"}
         )
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                res_data = json.loads(resp.read().decode("utf-8"))
-                data_items = sorted(res_data["data"], key=lambda x: x.get("index", 0))
-                for item in data_items:
-                    all_vecs.append(item["embedding"])
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))["data"][0]["embedding"]
         except Exception:
-            # Fallback to single-item requests if batch fails
-            for item_text in batch:
+            if limit <= floor:
+                raise
+            limit = max(floor, limit // 2)
+
+
+def get_embeddings(texts, endpoint=EMBEDDING_URL, batch_size=8):
+    """Return (vectors, skipped): a list parallel to texts, None where the
+    server would not embed a chunk at any length.
+
+    A skipped chunk keeps its keyword row, so search still finds it through
+    BM25; it simply has no meaning vector and the meaning leg does not rank it.
+    Filling the slot with a placeholder would be worse: a zero vector is
+    indistinguishable from a real one at search time, whereas a missing row
+    degrades in a way that is visible.
+    """
+    out: list = [None] * len(texts)
+    total = len(texts)
+    for start in range(0, total, batch_size):
+        idx = list(range(start, min(start + batch_size, total)))
+        batch = [texts[j][:1100] for j in idx]
+        payload = json.dumps({"input": batch}).encode("utf-8")
+        req = urllib.request.Request(
+            endpoint, data=payload, headers={"Content-Type": "application/json"}
+        )
+        batched = False
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                items = sorted(
+                    json.loads(resp.read().decode("utf-8"))["data"],
+                    key=lambda x: x.get("index", 0),
+                )
+            if len(items) == len(idx):
+                for pos, item in zip(idx, items):
+                    out[pos] = item["embedding"]
+                batched = True
+        except Exception:
+            pass
+        if not batched:
+            # One bad chunk should not cost the batch.
+            for j in idx:
                 try:
-                    sub_payload = json.dumps({"input": item_text[:800]}).encode("utf-8")
-                    sub_req = urllib.request.Request(
-                        endpoint, data=sub_payload, headers={"Content-Type": "application/json"}
-                    )
-                    with urllib.request.urlopen(sub_req, timeout=30) as sub_resp:
-                        sub_data = json.loads(sub_resp.read().decode("utf-8"))
-                        all_vecs.append(sub_data["data"][0]["embedding"])
-                except Exception:
-                    # Absolute fallback: dummy normalized vector
-                    dummy = [0.0] * 384
-                    dummy[0] = 1.0
-                    all_vecs.append(dummy)
-        if (i // batch_size) % 25 == 0 or i + batch_size >= total:
-            print(f"embedded {min(i + batch_size, total)}/{total} chunks...")
-    return all_vecs
+                    out[j] = embed_one(texts[j], endpoint)
+                except Exception as exc:
+                    print(f"  skipped chunk {j}: {exc}")
+        if (start // batch_size) % 25 == 0 or start + batch_size >= total:
+            print(f"embedded {min(start + batch_size, total)}/{total} chunks...")
+    return out, sum(1 for v in out if v is None)
 
 
 SCHEMA = """
@@ -225,29 +283,49 @@ def main():
         row = (entry["source"], "distilled", 0, 0, body, "distilled")
         docs.append((label + "\n" + body, row))
 
+    chunk_ids = []
     for embed_text, row in docs:
         cur = db.execute(
             "INSERT INTO chunks (file, section, start_line, end_line, text, kind) VALUES (?,?,?,?,?,?)",
             row,
         )
+        chunk_ids.append(cur.lastrowid)
         db.execute(
             "INSERT INTO chunks_fts (rowid, text, file, section) VALUES (?,?,?,?)",
             (cur.lastrowid, embed_text, row[0], row[1]),
         )
 
     model_line = "keyword only (embedding endpoint unavailable)"
+    model_name, dim, vecs, skipped, n_vec = "none", 0, [], 0, 0
     if not docs:
         model_line = "nothing to index: no markdown found under the corpus"
     else:
         try:
-            vecs = get_embeddings([t for t, _ in docs])
-            for rowid, vec in enumerate(vecs, start=1):
-                norm = sum(x * x for x in vec) ** 0.5 or 1.0
-                blob = struct.pack(f"{len(vec)}f", *(x / norm for x in vec))
-                db.execute("INSERT INTO vectors (id, vec) VALUES (?,?)", (rowid, blob))
-            model_line = f"model bge-small-en-v1.5 ({len(vecs[0])}d) + keyword sqlite fts5 via {EMBEDDING_URL}"
+            model_name, dim = probe_embedding()
+            vecs, skipped = get_embeddings([t for t, _ in docs])
         except Exception as exc:
-            print(f"warning: embedding leg failed ({exc}), falling back to keyword")
+            # Leave a valid keyword-only index rather than a half-embedded one.
+            print(f"warning: embedding leg unavailable ({exc}); indexing keyword only")
+            model_name, dim, vecs, skipped = "none", 0, [], 0
+        for chunk_id, vec in zip(chunk_ids, vecs):
+            if vec is None:
+                continue
+            norm = sum(x * x for x in vec) ** 0.5 or 1.0
+            blob = struct.pack(f"{len(vec)}f", *(x / norm for x in vec))
+            db.execute("INSERT INTO vectors (id, vec) VALUES (?,?)", (chunk_id, blob))
+            n_vec += 1
+        if n_vec:
+            note = f", {skipped} chunk(s) unembedded" if skipped else ""
+            model_line = f"model {model_name} ({dim}d) + keyword sqlite fts5 via {EMBEDDING_URL}{note}"
+        else:
+            model_line = "keyword only sqlite fts5 (embedding leg off); index has no vectors"
+
+    # Which model built this index decides whether a later query vector is
+    # comparable at all. search.py reads these rows back.
+    db.execute("INSERT INTO meta VALUES ('embedding_endpoint', ?)", (EMBEDDING_URL,))
+    db.execute("INSERT INTO meta VALUES ('embedding_model', ?)", (model_name,))
+    db.execute("INSERT INTO meta VALUES ('embedding_dim', ?)", (str(dim),))
+    db.execute("INSERT INTO meta VALUES ('embedding_vectors', ?)", (str(n_vec),))
 
     db.commit()
     db.close()

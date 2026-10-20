@@ -4,6 +4,7 @@ graph_memory.py — Unified CLI for Local Graph Memory & RAG (Glitch Cat Club Ar
 """
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +12,23 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parent
 RAG_DIR = SKILL_DIR / "rag"
 GRAPH_DIR = SKILL_DIR / "graph"
+
+
+def _drive_root() -> Path:
+    """The AI volume root: $AI_ROOT, else the nearest ancestor holding models/."""
+    env = os.environ.get("AI_ROOT")
+    if env:
+        return Path(env).expanduser()
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "models").is_dir():
+            return parent
+    return Path("/run/media/rodri/AI")
+
+
+DRIVE = _drive_root()
+# The notes corpus lives on the AI volume, next to models/, not inside the
+# skill. A harness copy has no volume above it, hence the env override.
+DEFAULT_CORPUS = os.environ.get("GRAPH_MEMORY_CORPUS", str(DRIVE / "University/notes"))
 
 
 def main():
@@ -49,11 +67,11 @@ def main():
 
     # index
     p_index = sub.add_parser("index", help="Rebuild the index over notes corpus")
-    p_index.add_argument("--corpus", default="/run/media/rodri/AI/University/notes", help="Path to notes directory")
+    p_index.add_argument("--corpus", default=DEFAULT_CORPUS, help="Path to notes directory")
 
     # distil
     p_distil = sub.add_parser("distil", help="Distil markdown notes into verified question-rule-quote triplets")
-    p_distil.add_argument("corpus", nargs="?", default="/run/media/rodri/AI/University/notes", help="Path to notes directory")
+    p_distil.add_argument("corpus", nargs="?", default=DEFAULT_CORPUS, help="Path to notes directory")
     p_distil.add_argument("--limit", type=int, default=None, help="Limit number of notes to process")
 
     args = parser.parse_args()

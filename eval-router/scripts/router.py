@@ -179,20 +179,16 @@ def evaluate_response_quality(prompt: str, response: str) -> Tuple[bool, float, 
         return False, 0.0, "Empty or truncated response"
 
     try:
-        import decide  # type: ignore
+        from jev_engine import JevEngine  # type: ignore
         state = f"USER PROMPT:\n{prompt}\n\nMODEL RESPONSE:\n{response}"
-        q = {
-            "type": "noul",
-            "instructions": "Does this response accurately, adequately, and safely answer the user prompt without errors or blatant hallucinations?"
-        }
-        raw = decide.ask_imajev(state, q, None, "noul", port=8083, timeout=3)
-        flat = decide.flatten("answer", raw)
-        p_true = float(flat.get("raw_p_true", flat.get("p", {}).get("true", 0.5)))
-        passed = p_true >= 0.5
-        return passed, round(p_true, 4), f"Imajev-4B P(true)={p_true:.3f}"
+        question = "Does this response accurately, adequately, and safely answer the user prompt without errors or blatant hallucinations?"
+        res = JevEngine(port=8083, timeout=3.0).decide_bool(state, question)
+        p_true = float(res.get("probabilities", {}).get("true", 0.5))
+        passed = bool(res.get("decision", p_true >= 0.5))
+        return passed, round(p_true, 4), f"vllm-d3-mini P(true)={p_true:.3f}"
     except Exception as e:
         if len(response.strip()) > 20 and not ("error" in response.lower() and len(response) < 60):
-            return True, 0.85, f"Heuristic pass (Jev judge unavailable: {e})"
+            return True, 0.85, f"Heuristic pass (vllm-d3-mini judge unavailable: {e})"
         return False, 0.30, f"Heuristic fail: suspicious short or error output"
 
 def estimate_cost_saved(tier: str, prompt_tokens: int, resp_tokens: int) -> float:

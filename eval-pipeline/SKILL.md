@@ -1,15 +1,20 @@
 ---
 name: eval-pipeline
+
 description: >
   Step-level propagation risk mitigation and intermediate artifact ledger (Glitch Cat Club / Kem Glitch;
   Reel DeHK65INHqh). Tags every step explicitly as [D] (Deterministic Code), [P] (Probabilistic Model), or [H] (Human),
   forcing disk serialization of intermediate states (step_01.json) and halting compound downstream failures via
   automated assertion gates.
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Requires Python 3.10+. No network access needed."
 metadata:
-  creator: kem_glitch
-  source_reel_id: DeHK65INHqh
-  source_reel_url: https://www.instagram.com/reel/DeHK65INHqh/
-  source_reel_vault_note: kem_glitch/2026-10-16_eval_pipeline_and_propagation_risk/notes.md
+  creator: "kem_glitch"
+  source_reel_id: "DeHK65INHqh"
+  source_reel_url: "https://www.instagram.com/reel/DeHK65INHqh/"
+  source_reel_vault_note: "kem_glitch/2026-10-16_eval_pipeline_and_propagation_risk/notes.md"
+allowed-tools: "Bash(python3:*) Read Write"
 ---
 
 # Eval Pipeline (`eval-pipeline`)

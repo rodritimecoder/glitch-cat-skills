@@ -18,7 +18,7 @@ DB = Path(os.environ.get("RAG_DB_PATH", str(HERE / "rag.db")))
 K = 60  # rank fusion smoothing constant
 TOP = 3
 CONTEXT_LINES = 6
-EMBEDDING_URL = os.environ.get("EMBEDDING_URL", "http://127.0.0.1:8082/v1/embeddings")
+EMBEDDING_URL = os.environ.get("EMBEDDING_URL", "http://127.0.0.1:8087/v1/embeddings")
 
 
 STOPWORDS = {
@@ -40,10 +40,33 @@ def keyword_leg(db, query):
     return [r[0] for r in rows]
 
 
+def index_embedding(db):
+    """What built this index: (model, dim, endpoint).
+
+    The embedding slot may host bge-small (384d) or EmbeddingGemma-2 (768d).
+    Vectors from the two are not comparable, so the index remembers which one
+    it was built with and the meaning leg checks the server against it.
+    """
+    try:
+        rows = dict(db.execute("SELECT key, value FROM meta").fetchall())
+    except sqlite3.OperationalError:
+        return "", 0, ""
+    return (
+        rows.get("embedding_model", ""),
+        int(rows.get("embedding_dim") or 0),
+        rows.get("embedding_endpoint", ""),
+    )
+
+
 def meaning_leg(db, query):
+    """Return (rowids, reason). reason is set only when the leg could not run."""
     rows = db.execute("SELECT id, vec FROM vectors").fetchall()
     if not rows:
-        return None
+        model, dim, _ = index_embedding(db)
+        if dim:
+            return None, f"index has no vectors (built {model} {dim}d, embedding leg failed)"
+        return None, None
+    model, dim, _ = index_embedding(db)
     try:
         payload = json.dumps({"input": query}).encode("utf-8")
         req = urllib.request.Request(
@@ -53,17 +76,27 @@ def meaning_leg(db, query):
             res_data = json.loads(resp.read().decode("utf-8"))
             q = res_data["data"][0]["embedding"]
     except Exception as exc:
-        print(f"warning: embedding leg failed ({exc})")
-        return None
+        return None, f"{EMBEDDING_URL} unavailable ({exc})"
+
+    if dim and len(q) != dim:
+        # Refuse rather than compare incomparable vectors: a 384d query dotted
+        # against 768d rows would silently return nonsense.
+        return None, (
+            f"dimension mismatch — index was built with {model} ({dim}d) "
+            f"but {EMBEDDING_URL} returned {len(q)}d. Start the matching model "
+            f"(see ports.json slot 'embed') or rebuild with build_index.py"
+        )
 
     qnorm = sum(x * x for x in q) ** 0.5 or 1.0
     q = [x / qnorm for x in q]
     scored = []
     for rowid, blob in rows:
         vec = struct.unpack(f"{len(blob) // 4}f", blob)
+        if len(vec) != len(q):
+            continue
         scored.append((sum(a * b for a, b in zip(q, vec)), rowid))
     scored.sort(reverse=True)
-    return [rowid for _, rowid in scored[:10]]
+    return [rowid for _, rowid in scored[:10]], None
 
 
 def fuse(legs):
@@ -179,10 +212,10 @@ def main():
     db = sqlite3.connect(DB)
 
     legs = {"keyword": keyword_leg(db, query)}
-    meaning = meaning_leg(db, query)
+    meaning, why = meaning_leg(db, query)
     if meaning is None:
-        if not (args.json or args.table or args.out):
-            print(f"meaning leg off (endpoint {EMBEDDING_URL} unavailable), keyword only\n")
+        if why and not (args.json or args.table or args.out):
+            print(f"meaning leg off: {why} — keyword only\n")
     else:
         legs["meaning"] = meaning
 

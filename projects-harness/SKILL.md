@@ -1,17 +1,22 @@
 ---
 name: projects-harness
+
 description: >
   Autonomous multi-agent CLI coordination harness reverse-engineered from Anthropic's Claude Projects
   beta (Glitch Cat Club / Kem Glitch; Reel DejvUBotWJD). Features deterministic 3-way message routing,
   dual-provenance envelope hooks (AI coordinator brief vs owner verbatim instructions), single-line-per-fact
   atomic memory updates with in-place history superseding, a 200-line memory load cap, static rule vs
   memory clash detection, and a concurrency-throttled task queue (max 2).
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Requires Python 3.10+. No network access needed."
 metadata:
-  creator: kem_glitch
-  source_reel_id: DejvUBotWJD
-  source_reel_url: https://www.instagram.com/reel/DejvUBotWJD/
-  source_reel_vault_note: kem_glitch/2026-10-17_claude_projects_beta_architecture/notes.md
-  version: 1.0.0
+  creator: "kem_glitch"
+  source_reel_id: "DejvUBotWJD"
+  source_reel_url: "https://www.instagram.com/reel/DejvUBotWJD/"
+  source_reel_vault_note: "kem_glitch/2026-10-17_claude_projects_beta_architecture/notes.md"
+  version: "1.0.0"
+allowed-tools: "Bash(python3:*) Read Write"
 ---
 
 # Projects Harness — Multi-Agent Coordination CLI (`projects-harness`)

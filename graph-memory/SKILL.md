@@ -1,15 +1,19 @@
 ---
 name: graph-memory
+
 description: >
   Unified Glitch Cat Club Knowledge Graph & Hybrid RAG Engine (Glitch Cat Club; Reel DcTIPKyt7Am):
   deterministic SQLite k-hop graph traversal (<2ms), entity deduplication via UUID5 & aliases,
-  and hybrid BM25 + EmbeddingGemma-2 (768d multimodal) RRF search with exact-quote distillation.
+  and hybrid BM25 + bge-small-en-v1.5 (384d) RRF search with exact-quote distillation.
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Requires the local embedding endpoint on :8087 for the hybrid BM25 and vector leg. The slot also hosts EmbeddingGemma-2 (768d); an index built with one is not comparable with the other, so rag.db records which model built it."
 metadata:
-  creator: kem_glitch
-  source_reel_id: DcTIPKyt7Am
-  source_reel_url: https://www.instagram.com/reel/DcTIPKyt7Am/
-  source_reel_vault_note: kem_glitch/2026-10-17_graph_memory_rant_and_fallacies/notes.md
-compatibility: "Linux, Python 3 stdlib (urllib, sqlite3, struct, json, uuid). Zero external pip dependencies. Local endpoints: :8082 (EmbeddingGemma-2 768d multimodal embeddings via unsloth cpp), :8080 (Genesis 35B coder / distillation)."
+  creator: "kem_glitch"
+  source_reel_id: "DcTIPKyt7Am"
+  source_reel_url: "https://www.instagram.com/reel/DcTIPKyt7Am/"
+  source_reel_vault_note: "kem_glitch/2026-10-17_graph_memory_rant_and_fallacies/notes.md"
+allowed-tools: "Bash(graph-memory:*) Bash(python3:*) Read Write"
 ---
 
 # `graph-memory` — Unified Knowledge Graph & Hybrid RAG (Glitch Cat Club Architecture)
@@ -28,7 +32,7 @@ A dual-legged local memory system derived directly from **Kem Glitch (Glitch Cat
 │   Deterministic Typed Relationships  │    Lexical + Semantic Discovery      │
 ├──────────────────────────────────────┼──────────────────────────────────────┤
 │ • SQLite tables (entities, relations,│ • SQLite FTS5 (BM25 keyword search)  │
-│   aliases)                           │ • EmbeddingGemma-2 (768d multimodal) │
+│   aliases)                           │ • bge-small-en-v1.5 (384d)           │
 │ • Deterministic UUID5 entity IDs     │ • Reciprocal Rank Fusion (K=60)      │
 │   uuid5(type + normalised(name))     │ • Exact-quote LLM distillation       │
 │ • Recursive CTE k-hop SQL traversal  │ • Zero-hallucination verbatim check  │

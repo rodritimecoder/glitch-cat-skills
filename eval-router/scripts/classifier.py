@@ -9,8 +9,22 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-JEV_SCRIPTS = Path("/run/media/rodri/AI/skills/jev-cli/scripts")
-if str(JEV_SCRIPTS) not in sys.path:
+def _find_jev_scripts() -> Optional[Path]:
+    """Locate the jev-decision skill's engine, in the repo or a flat harness."""
+    here = Path(__file__).resolve()
+    roots = [Path("/run/media/rodri/AI/skills"), *here.parents]
+    roots += [Path.home() / d for d in (
+        ".config/opencode/skills", ".gemini/config/skills", ".pi/agent/skills",
+    )]
+    for root in roots:
+        for cand in (root / "jev-decision" / "scripts", root / "glitch-cat" / "jev-decision" / "scripts"):
+            if (cand / "jev_engine.py").is_file():
+                return cand
+    return None
+
+
+JEV_SCRIPTS = _find_jev_scripts()
+if JEV_SCRIPTS and str(JEV_SCRIPTS) not in sys.path:
     sys.path.append(str(JEV_SCRIPTS))
 
 CONFIG_DIR = Path.home() / ".config" / "eval-router"
@@ -125,17 +139,17 @@ def classify(prompt: str, port: int = 8083, min_conf: float = 0.45) -> Dict[str,
             pass
 
     try:
-        import decide  # type: ignore
-        q = {
-            "type": "choice",
-            "instructions": "Which task complexity tier does this engineering/coding request belong to?",
-            "criteria": TIER_CRITERIA
-        }
-        raw = decide.ask_imajev(prompt, q, TIER_CRITERIA, "choice", port=port, timeout=3)
-        flat = decide.flatten("answer", raw)
-        tier = flat["answer"]
-        conf = float(flat.get("confidence", 0.0))
-        probs = flat.get("p", {})
+        from jev_engine import JevEngine  # type: ignore
+        question = (
+            "Which task complexity tier does this engineering/coding request belong to? "
+            + " ".join(f"{tier}: {desc}." for tier, desc in TIER_CRITERIA.items())
+        )
+        res = JevEngine(port=port, timeout=3.0).decide_choice(
+            prompt, question, list(TIER_CRITERIA.keys())
+        )
+        tier = res["selection"]
+        conf = float(res.get("confidence", 0.0))
+        probs = res.get("probabilities", {})
 
         if conf < min_conf:
             h_res = _heuristic_classify(prompt)
@@ -146,10 +160,10 @@ def classify(prompt: str, port: int = 8083, min_conf: float = 0.45) -> Dict[str,
             "tier": tier,
             "confidence": round(conf, 4),
             "probabilities": {k: round(float(v), 4) for k, v in probs.items()},
-            "source": "imajev_8083",
+            "source": res.get("source", "vllm_d3_mini_systemone"),
             "reasoning": f"Calibrated Jev decision (confidence {conf:.2f})"
         }
     except Exception as e:
         res = _heuristic_classify(prompt)
-        res["reasoning"] += f" (Jev offline: {e})"
+        res["reasoning"] += f" (vllm-d3-mini offline: {e})"
         return res

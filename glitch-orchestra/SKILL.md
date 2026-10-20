@@ -1,14 +1,19 @@
 ---
 name: glitch-orchestra
+
 description: >
   Claude Code mods and terminal conductor architecture for multi-session agent supervision (Glitch Cat Club / Kem Glitch;
   Reel Dd_vZqINEtW). Operates the lead assistant as a terminal conductor dispatching tasks to dedicated child sessions,
   tracking active progress without context dilution, and triggering completion audio chimes.
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Requires Python 3.10+. No network access needed."
 metadata:
-  creator: kem_glitch
-  source_reel_id: Dd_vZqINEtW
-  source_reel_url: https://www.instagram.com/reel/Dd_vZqINEtW/
-  source_reel_vault_note: kem_glitch/2026-10-17_claude_code_mods_and_glitch_orchestra/notes.md
+  creator: "kem_glitch"
+  source_reel_id: "Dd_vZqINEtW"
+  source_reel_url: "https://www.instagram.com/reel/Dd_vZqINEtW/"
+  source_reel_vault_note: "kem_glitch/2026-10-17_claude_code_mods_and_glitch_orchestra/notes.md"
+allowed-tools: "Bash(python3:*) Read Write"
 ---
 
 # Glitch Orchestra (`glitch-orchestra`)

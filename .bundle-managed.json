@@ -7,6 +7,7 @@
     "graph-memory",
     "guard-hooks",
     "jev-decision",
+    "kem-thought",
     "parallel-test-lane",
     "projects-harness",
     "semantic-cache",

@@ -1,0 +1,127 @@
+---
+name: notes-index
+
+description: >
+  Local ranked search over a Markdown notes folder — one SQLite FTS5 index, fingerprint-based refresh, Haiku-class
+  summaries, and a CLAUDE.md rule so the agent searches the index instead of grepping (Glitch Cat Club / Kem Glitch;
+  Reel DezGALzNCuf, artifact MdwChkFxkCKwwnToGVJXGX). Cuts memory-search token spend by up to half on a large notes
+  vault. Use when answering questions about past work, decisions or notes, or when a folder of Markdown keeps growing.
+
+license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
+compatibility: "Python 3.10+ with sqlite3 FTS5. Summaries need the `claude` CLI (haiku) or the local model on :8080."
+metadata:
+  creator: "kem_glitch"
+  source_reel_id: "DezGALzNCuf"
+  source_reel_url: "https://www.instagram.com/reel/DezGALzNCuf/"
+  source_artifact_url: "https://claude.ai/artifact/MdwChkFxkCKwwnToGVJXGX"
+  source_reel_vault_note: "kem_glitch/2026-10-22_sqlite_fts_index_for_native_memory_search/notes.md"
+allowed-tools: "Bash(python3:*) Bash(notes-index:*) Read Write Edit"
+---
+
+# Notes Index (`notes-index`)
+
+One ranked search instead of many greps. Derived from **Kem Glitch (Glitch Cat Club)**'s *"Half the Tokens"* artifact
+([`MdwChkFxkCKwwnToGVJXGX`](https://claude.ai/artifact/MdwChkFxkCKwwnToGVJXGX)) and reel
+[`DezGALzNCuf`](https://www.instagram.com/reel/DezGALzNCuf/), both vaulted at
+`/run/media/rodri/AI/creator-vault/kem_glitch/2026-10-22_sqlite_fts_index_for_native_memory_search/`.
+
+---
+
+## 🏛️ The Problem
+
+When the model answers a question about your past work it **greps, reads, then greps again**. Every file it opens
+lands in the context window, and the context window is the token bill. On one person's ~3,000-note vault, plain
+Claude Code on Opus opened **9 files** for a single prompt.
+
+## 🛠️ The Fix
+
+A local SQLite FTS5 index over your Markdown notes, and a rule in `CLAUDE.md` that makes the agent search the index
+first. One ranked query opens the one file that matters.
+
+| Part | What it does |
+| :--- | :--- |
+| `notes.db` | One SQLite file, FTS5 index (porter stemming) over raw, summary and fact rows |
+| `index.py update` | Fingerprints every note, touches only what changed, drops deleted notes |
+| Summariser | Haiku (or the local model on `:8080`) writes topic + fact rows beside the raw text |
+| `index.py search` | One ranked query, reciprocal rank fusion, recency bonus, health line first |
+| `CLAUDE.md` rule | Tells the agent to search the index before answering |
+| Timer | Refreshes every 6 hours, silently, no window |
+
+## 🖥️ CLI Quickstart
+
+```bash
+NI="notes-index"        # installed on PATH by sync-skills
+# or, straight from the checkout:
+# NI="python3 /run/media/rodri/AI/skills/notes-index/notes_index.py"
+
+# 1. What would the one-off first pass cost?
+$NI --folder ~/notes plan
+
+# 2. Scaffold: index, CLAUDE.md rule, 6-hour timer (asks before the first ingest)
+$NI --folder ~/notes init --timer
+
+# 3. Refresh (safe to run any time; unchanged notes cost nothing)
+$NI --folder ~/notes update
+
+# 4. Search — the health line prints first, then ranked pointers
+$NI --folder ~/notes search "decision about the worktree harness"
+```
+
+`search` prints the health line first, exactly as the artifact prescribes:
+
+```
+2883 rows | last refreshed 2026-10-22T12:42:43 | last error: none
+- 2026-10-17 | topic | claude_projects_beta_architecture/notes.md  (score 0.01647)
+    »multi-agent coordination CLI three-way routing«
+    /home/rodri/notes/claude_projects_beta_architecture/notes.md
+```
+
+Results are **pointers**. Open the file before stating a fact from it.
+
+## 🧩 Commands
+
+| Command | Purpose |
+| :--- | :--- |
+| `plan` | Count notes, notes needing summaries, estimated minutes |
+| `init` | Create the index, write the `CLAUDE.md` rule, optionally install the timer (`--yes` to ingest now) |
+| `update` | Re-index new/changed/removed notes (`--strict` treats summary failures as run failures) |
+| `search` | Ranked search; `--after YYYY-MM-DD`, `--limit N` (default 5) |
+| `status` | Files, rows by kind, freshness, last error, last log line |
+| `rule` | Print the `CLAUDE.md` block, or `--apply` it; `--variant full\|lean\|trust-snippet` |
+| `timer` | `install` / `status` / `uninstall` the 6-hour refresh |
+
+## ⚖️ The Levers (change one at a time, compare)
+
+| Lever | What it does |
+| :--- | :--- |
+| `--limit 5` (default) | Each search prints about a page of results instead of two |
+| `rule --variant lean` | Adds *"If the search found it, don't also grep"* — the biggest waste in Kem's testing |
+| `rule --variant trust-snippet` | Opens the file only when the snippet doesn't hold the answer, and searches once more for anything newer |
+| `--no-summaries` | Skip the summary pass: fewer tokens spent indexing, weaker recall on long notes |
+| `--workers N` | Parallel summary calls (default 6) |
+
+## ⚠️ What It Does Not Do
+
+- **It is not a lock.** The `CLAUDE.md` rule is an instruction; in Kem's testing Claude ran the search in 91 of 92 runs.
+- **It does not improve accuracy**, it makes finding cheaper. Same accuracy, fewer tokens.
+- **It is keyword search.** It depends on the words you use; the summaries add the words you would have searched with.
+- **It pays off on large vaults.** A few hundred notes: one grep already finds the answer and the index adds a step.
+- **The first pass costs once** — summarising long notes is a one-off.
+
+## 🔒 Safety
+
+- API keys, tokens and passwords are **masked before they reach the database**.
+- Note contents are treated as data, never as instructions, by the summariser.
+- A lock file stores the process id; a lock left by a killed run is ignored, not a blocker.
+- A failed update keeps the old `last refreshed` time and records `last error` instead.
+
+## 🧪 Tests
+
+```bash
+python3 tests/test_notes_index.py
+```
+
+## 📚 Reference
+
+- `references/field-notes.md` — the full "Half the Tokens" field notes, as published
+- `references/build-prompt.md` — the copy-paste build prompt from section 08

@@ -154,6 +154,33 @@ class TestNotesIndex(unittest.TestCase):
         self.assertEqual(result["long_files"], 1)
         print("  ✓ the first-pass plan counts notes and summaries")
 
+    def test_16_failed_summary_is_retried_next_run(self):
+        self.write("long.md", "# Long\n\n" + ("z" * 9000))
+        original = self.index.summarize
+
+        def broken(path, text):
+            raise RuntimeError("summarizer exploded")
+
+        self.index.summarize = broken
+        first = self.index.update(use_summarizer=True)
+        self.assertEqual(first.summaries_made, 0)
+        self.assertEqual(len(first.summary_errors), 1)
+        self.index.summarize = original
+        processed = self.index.status()["files"]
+        self.assertEqual(processed, 0)
+        second = self.index.update(use_summarizer=True)
+        self.assertEqual(second.new_files, 1)
+        self.assertEqual(second.summaries_made, 1)
+        self.assertEqual(self.index.status()["files"], 1)
+        print("  ✓ a failed summary is retried on the next run")
+
+    def test_17_malformed_summary_json_is_repaired(self):
+        broken = '{"topics": [{"title": "T", "question": "Q", "summary": "S"},], "facts": [{"text": "F",}]}'
+        parsed = NotesIndex._parse_summary(broken)
+        self.assertEqual(parsed["topics"][0]["title"], "T")
+        self.assertEqual(parsed["facts"][0]["text"], "F")
+        print("  ✓ trailing commas in summarizer JSON are repaired")
+
     def test_13_mask_secrets_helper(self):
         masked = mask_secrets("token: ghp_abcdefghijklmnopqrstuvwxyz012345")
         self.assertNotIn("ghp_abcdefghijklmnopqrstuvwxyz012345", masked)

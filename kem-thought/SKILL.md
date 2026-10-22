@@ -117,6 +117,8 @@ quote wins.
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## Principles

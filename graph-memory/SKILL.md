@@ -120,6 +120,8 @@ glitch-cat/graph-memory/
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## Memory: query the graph before you search

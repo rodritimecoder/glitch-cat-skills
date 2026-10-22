@@ -49,6 +49,8 @@ $PIPE verify-sample
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## Pipeline: tag every step and gate it

@@ -132,6 +132,8 @@ python3 tests/test_notes_index.py
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## Notes index: search it first

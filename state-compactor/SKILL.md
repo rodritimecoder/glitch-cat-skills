@@ -102,6 +102,8 @@ state-compactor inspect
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## State: read the ledger, not the pile

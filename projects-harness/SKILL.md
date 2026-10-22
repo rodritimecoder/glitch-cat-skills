@@ -139,6 +139,8 @@ Output:
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## Coordination

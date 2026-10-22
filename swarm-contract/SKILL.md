@@ -49,6 +49,8 @@ $SWARM status
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## Swarm contract

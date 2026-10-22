@@ -54,6 +54,8 @@ $CACHE stats
 
 ---
 
+---
+
 ## AGENTS.md rule
 
 ## Semantic cache: ask it first

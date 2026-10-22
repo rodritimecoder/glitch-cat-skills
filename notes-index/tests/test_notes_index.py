@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 
 sys.path.append(str(Path(__file__).resolve().parent.parent / "scripts"))
-from notes_index_core import NotesIndex, apply_rule, mask_secrets, plan  # noqa: E402
+from notes_index_core import NotesIndex, apply_rule, mask_secrets, plan, rule_block  # noqa: E402
 
 
 class TestNotesIndex(unittest.TestCase):
@@ -180,6 +180,31 @@ class TestNotesIndex(unittest.TestCase):
         self.assertEqual(parsed["topics"][0]["title"], "T")
         self.assertEqual(parsed["facts"][0]["text"], "F")
         print("  ✓ trailing commas in summarizer JSON are repaired")
+
+    def test_18_levers_are_independently_selectable(self):
+        script = self.folder / "index.py"
+        script.write_text("#\n", encoding="utf-8")
+        block = rule_block(script, "full", "agents", ("check-newer",))
+        self.assertIn("anything newer on the same topic", block)
+        self.assertNotIn("don't also grep", block)
+        self.assertIn("Open the file before you state a fact", block)
+        print("  ✓ one lever can be applied on its own")
+
+    def test_19_trust_snippet_lever_replaces_the_strict_line(self):
+        script = self.folder / "index.py"
+        script.write_text("#\n", encoding="utf-8")
+        block = rule_block(script, "full", "agents", ("trust-snippet",))
+        self.assertIn("only if the snippet doesn't hold the answer", block)
+        self.assertNotIn("Open the file before you state a fact", block)
+        print("  ✓ the trust-snippet lever swaps the strict line")
+
+    def test_20_all_four_levers_together(self):
+        script = self.folder / "index.py"
+        script.write_text("#\n", encoding="utf-8")
+        block = rule_block(script, "full", "agents", ("no-grep", "trust-snippet", "fewer-results", "check-newer"))
+        for needle in ("don't also grep", "snippet doesn't hold", "5, not 10", "anything newer"):
+            self.assertIn(needle, block)
+        print("  ✓ all four levers compose in one rule")
 
     def test_13_mask_secrets_helper(self):
         masked = mask_secrets("token: ghp_abcdefghijklmnopqrstuvwxyz012345")

@@ -94,10 +94,23 @@ Results are **pointers**. Open the file before stating a fact from it.
 
 | Lever | What it does |
 | :--- | :--- |
-| `--limit 5` (default) | Each search prints about a page of results instead of two |
-| `rule --variant lean` | Adds *"If the search found it, don't also grep"* — the biggest waste in Kem's testing |
+| `--lever no-grep` | Adds *"If the search found it, don't also grep"* — the biggest waste in Kem's testing |
+| `--lever trust-snippet` | Swaps *"Open the file before you state a fact"* for *"Open the file only if the snippet doesn't hold the answer"* |
+| `--lever fewer-results` | Acts only on the top few hits; the search default is already 5, not 10 |
+| `--lever check-newer` | Adds *"Before answering, search once more for anything newer on the same topic"* — the accuracy lever |
+
+The artifact's section 09 lists these four. Each is selectable on its own and they compose:
+
+```bash
+notes-index rule --lever no-grep                       # one lever
+notes-index rule --lever no-grep --lever check-newer   # two
+notes-index rule --variant trust-snippet               # shipped bundle: trust-snippet + no-grep + check-newer
+```
+
+| Other flag | What it does |
+| :--- | :--- |
+| `--limit N` | Hits per search (default 5, not 10) |
 | `--target claude` | Writes the rule to `CLAUDE.md` instead of `AGENTS.md` |
-| `rule --variant trust-snippet` | Opens the file only when the snippet doesn't hold the answer, and searches once more for anything newer |
 | `--no-summaries` | Skip the summary pass: fewer tokens spent indexing, weaker recall on long notes |
 | `--workers N` | Parallel summary calls (default 6) |
 

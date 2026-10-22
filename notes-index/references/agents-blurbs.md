@@ -57,6 +57,9 @@ notes-index --folder <notes-folder> search "distinctive words"
 *Cheaper variant:* `- Results are pointers. Open the file only if the snippet doesn't hold the answer.`
 plus `- Before answering, search once more for anything newer on the same topic.`
 
+All four of the artifact's section 09 levers are individually selectable with
+`notes-index rule --lever no-grep --lever trust-snippet --lever fewer-results --lever check-newer`.
+
 ### `graph-memory` — hybrid graph + RAG over a corpus
 
 ```markdown

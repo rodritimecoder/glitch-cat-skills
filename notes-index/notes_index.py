@@ -17,6 +17,7 @@ sys.path.append(str(Path(__file__).resolve().parent / "scripts"))
 from notes_index_core import (  # noqa: E402
     DEFAULT_CHUNK,
     DEFAULT_LIMIT,
+    LEVER_NAMES,
     LockBusy,
     NotesIndex,
     apply_rule,
@@ -52,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_init.add_argument("--yes", action="store_true", help="Run the first full ingest without confirmation")
     p_init.add_argument("--rule-variant", default="full", choices=["full", "lean", "trust-snippet"])
     p_init.add_argument("--target", default="agents", choices=["agents", "claude"], help="Rule file to write (default: AGENTS.md)")
+    p_init.add_argument("--lever", action="append", choices=list(LEVER_NAMES), default=None, help="Add one optimisation lever to the rule (repeatable)")
     p_init.add_argument("--timer", action="store_true", help="Install the 6-hour refresh timer")
     p_init.add_argument("--every-hours", type=int, default=6)
     p_init.add_argument("--no-summaries", action="store_true", help="Index raw and note rows only")
@@ -73,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_rule.add_argument("--apply", action="store_true", help="Write the block into <folder>/CLAUDE.md")
     p_rule.add_argument("--variant", default="full", choices=["full", "lean", "trust-snippet"])
     p_rule.add_argument("--target", default="agents", choices=["agents", "claude"], help="Rule file to write (default: AGENTS.md)")
+    p_rule.add_argument("--lever", action="append", choices=list(LEVER_NAMES), default=None, help="Add one optimisation lever to the rule (repeatable)")
 
     p_timer = sub.add_parser("timer", parents=[common], help="Manage the refresh timer")
     p_timer.add_argument("action", choices=["install", "status", "uninstall"])
@@ -102,7 +105,9 @@ def main(argv=None) -> int:
         if args.command == "init":
             result = plan(folder, chunk=args.chunk)
             index.connect()
-            rule_file = apply_rule(folder, script, args.rule_variant, args.target)
+            levers = tuple(args.lever) if args.lever else None
+            rule_file = apply_rule(folder, script, args.rule_variant, args.target, levers)
+            result["levers"] = list(levers) if levers else []
             result["rule_file"] = str(rule_file)
             result["rule_variant"] = args.rule_variant
             result["rule_target"] = args.target
@@ -169,9 +174,10 @@ def main(argv=None) -> int:
             return 0
 
         if args.command == "rule":
-            block = rule_block(script, args.variant, args.target)
+            levers = tuple(args.lever) if args.lever else None
+            block = rule_block(script, args.variant, args.target, levers)
             if args.apply:
-                path = apply_rule(folder, script, args.variant, args.target)
+                path = apply_rule(folder, script, args.variant, args.target, levers)
                 print(f"wrote {path}")
             else:
                 print(block)

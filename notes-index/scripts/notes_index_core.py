@@ -629,35 +629,53 @@ class NotesIndex:
         }
 
 
-RULE_BULLETS = {
-    "full": [
-        "- Use the words the note itself would use. If nothing fits, search once more with different words.",
-        "- Results are pointers. Open the file before you state a fact from it.",
-        "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
-    ],
-    "lean": [
-        "- Use the words the note itself would use. If nothing fits, search once more with different words.",
-        "- If the search found it, don't also grep.",
-        "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
-    ],
-    "trust-snippet": [
-        "- Use the words the note itself would use. If nothing fits, search once more with different words.",
-        "- Results are pointers. Open the file only if the snippet doesn't hold the answer.",
-        "- If the search found it, don't also grep.",
-        "- Before answering, search once more for anything newer on the same topic.",
-        "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
-    ],
+RULE_BASE_BULLETS = [
+    "- Use the words the note itself would use. If nothing fits, search once more with different words.",
+    "- Results are pointers. Open the file before you state a fact from it.",
+    "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
+]
+
+LEVER_APPEND = {
+    "no-grep": "- If the search found it, don't also grep.",
+    "fewer-results": "- Only act on the top few hits. The default is 5, not 10.",
+    "check-newer": "- Before answering, search once more for anything newer on the same topic.",
 }
 
-RULE_START = "<!-- notes-index:start -->"
-RULE_END = "<!-- notes-index:end -->"
-RULE_TARGETS = ("agents", "claude")
-TARGET_FILENAME = {"agents": "AGENTS.md", "claude": "CLAUDE.md"}
+LEVER_REPLACE = {
+    "trust-snippet": (
+        "- Results are pointers. Open the file before you state a fact from it.",
+        "- Results are pointers. Open the file only if the snippet doesn't hold the answer.",
+    ),
+}
+
+LEVER_NAMES = ("no-grep", "trust-snippet", "fewer-results", "check-newer")
+
+VARIANT_LEVERS = {
+    "full": (),
+    "lean": ("no-grep",),
+    "trust-snippet": ("trust-snippet", "no-grep", "check-newer"),
+}
 
 
-def rule_block(script: Path, variant: str = "full", target: str = "agents") -> str:
+def rule_bullets(levers: tuple) -> list:
+    bullets = list(RULE_BASE_BULLETS)
+    for lever in levers:
+        if lever in LEVER_REPLACE:
+            old, new = LEVER_REPLACE[lever]
+            bullets = [new if bullet == old else bullet for bullet in bullets]
+    for lever in levers:
+        if lever in LEVER_APPEND:
+            addition = LEVER_APPEND[lever]
+            if addition not in bullets:
+                bullets.insert(len(bullets) - 1, addition)
+    return bullets
+
+
+def rule_block(script: Path, variant: str = "full", target: str = "agents", levers: Optional[tuple] = None) -> str:
     name = TARGET_FILENAME[target]
-    bullets = "\n".join(bullet.format(script=script) for bullet in RULE_BULLETS[variant])
+    if levers is None:
+        levers = VARIANT_LEVERS.get(variant, ())
+    bullets = "\n".join(bullet.format(script=script) for bullet in rule_bullets(levers))
     body = (
         "## Notes index: search it first\n"
         f"{name} loads into every session. Before you answer about my past work, decisions or notes, run:\n"
@@ -666,11 +684,22 @@ def rule_block(script: Path, variant: str = "full", target: str = "agents") -> s
     )
     return f"{RULE_START}\n{body}{RULE_END}\n"
 
+RULE_START = "<!-- notes-index:start -->"
+RULE_END = "<!-- notes-index:end -->"
+RULE_TARGETS = ("agents", "claude")
+TARGET_FILENAME = {"agents": "AGENTS.md", "claude": "CLAUDE.md"}
 
-def apply_rule(folder: Path, script: Path, variant: str = "full", target: str = "agents") -> Path:
+
+def apply_rule(
+    folder: Path,
+    script: Path,
+    variant: str = "full",
+    target: str = "agents",
+    levers: Optional[tuple] = None,
+) -> Path:
     target_file = folder / TARGET_FILENAME[target]
     existing = target_file.read_text(encoding="utf-8") if target_file.exists() else ""
-    block = rule_block(script, variant, target)
+    block = rule_block(script, variant, target, levers)
     if RULE_START in existing:
         start = existing.index(RULE_START)
         end = existing.index(RULE_END) + len(RULE_END)

@@ -44,3 +44,15 @@ $PIPE audit --ledger-dir .eval_ledger
 # 2. Run self-diagnostic verification pipeline
 $PIPE verify-sample
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Pipeline: tag every step and gate it
+When a task has more than one step, tag each step [D] (deterministic), [P] (probabilistic) or [H] (human).
+- Serialize every step's output to disk before the next step reads it.
+- A [P] step needs a deterministic assertion after it. A gate that cannot fail is not a gate.
+- Stop at the first failed gate. Do not compound downstream on an unverified result.

@@ -51,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_init = sub.add_parser("init", parents=[common], help="Scaffold the index, the CLAUDE.md rule and the timer")
     p_init.add_argument("--yes", action="store_true", help="Run the first full ingest without confirmation")
     p_init.add_argument("--rule-variant", default="full", choices=["full", "lean", "trust-snippet"])
+    p_init.add_argument("--target", default="agents", choices=["agents", "claude"], help="Rule file to write (default: AGENTS.md)")
     p_init.add_argument("--timer", action="store_true", help="Install the 6-hour refresh timer")
     p_init.add_argument("--every-hours", type=int, default=6)
     p_init.add_argument("--no-summaries", action="store_true", help="Index raw and note rows only")
@@ -71,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_rule = sub.add_parser("rule", parents=[common], help="Print or apply the CLAUDE.md rule block")
     p_rule.add_argument("--apply", action="store_true", help="Write the block into <folder>/CLAUDE.md")
     p_rule.add_argument("--variant", default="full", choices=["full", "lean", "trust-snippet"])
+    p_rule.add_argument("--target", default="agents", choices=["agents", "claude"], help="Rule file to write (default: AGENTS.md)")
 
     p_timer = sub.add_parser("timer", parents=[common], help="Manage the refresh timer")
     p_timer.add_argument("action", choices=["install", "status", "uninstall"])
@@ -100,9 +102,10 @@ def main(argv=None) -> int:
         if args.command == "init":
             result = plan(folder, chunk=args.chunk)
             index.connect()
-            claude_md = apply_rule(folder, script, args.rule_variant)
-            result["claude_md"] = str(claude_md)
+            rule_file = apply_rule(folder, script, args.rule_variant, args.target)
+            result["rule_file"] = str(rule_file)
             result["rule_variant"] = args.rule_variant
+            result["rule_target"] = args.target
             if args.timer:
                 result["timer"] = install_timer(folder, index, args.every_hours)
             if not args.yes:
@@ -114,7 +117,7 @@ def main(argv=None) -> int:
                     print(f"notes found   : {result['files']}")
                     print(f"to summarise  : {result['long_files']}")
                     print(f"est. minutes  : {result['estimated_minutes']}")
-                    print(f"rule written  : {claude_md}")
+                    print(f"rule written  : {rule_file}")
                     print("run `notes-index init --yes` to do the first ingest")
                 return 0
             report = index.update(use_summarizer=not args.no_summaries)
@@ -122,7 +125,7 @@ def main(argv=None) -> int:
             if args.json:
                 print(json.dumps(result, indent=2))
             else:
-                print(f"rule written  : {claude_md}")
+                print(f"rule written  : {rule_file}")
                 print(f"ingest        : {report.as_line()}")
             return 0
 
@@ -166,9 +169,9 @@ def main(argv=None) -> int:
             return 0
 
         if args.command == "rule":
-            block = rule_block(script, args.variant)
+            block = rule_block(script, args.variant, args.target)
             if args.apply:
-                path = apply_rule(folder, script, args.variant)
+                path = apply_rule(folder, script, args.variant, args.target)
                 print(f"wrote {path}")
             else:
                 print(block)

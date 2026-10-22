@@ -89,3 +89,17 @@ agentic judge CARD-001 --model flash
 ```bash
 agentic run CARD-001
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Software factory
+Work moves through the board, not through chat:
+agentic kanban add "<task>" --req "<requirement>"
+agentic kanban move <card-id> done
+- One card, one verifiable requirement. No card without a done condition.
+- A fresh-context judge decides whether the work is done; the author does not grade itself.
+- Never merge a card whose gate has not run.

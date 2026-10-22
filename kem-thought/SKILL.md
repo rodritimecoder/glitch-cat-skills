@@ -112,3 +112,16 @@ Every principle cites the reel it came from, with a timestamp and a verbatim quo
 `references/provenance.md` maps principle → source → vault path, and lists the transcripts
 mined. Quotes are Kem's words; the rules are the distillation. Where they disagree, the
 quote wins.
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Principles
+- Code decides wherever it can. Red is red.
+- The poison sits upstream: fix the source of the bad context, not the symptom.
+- Always run the control.
+- A skill is instructions the model may follow; a hook is code that ALWAYS runs.
+- A judge that shares the author's context is not a judge.

@@ -97,3 +97,17 @@ state-compactor compact --out /tmp/handover_prompt.md
 # Inspect current state ledger
 state-compactor inspect
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## State: read the ledger, not the pile
+When you need the current state of a long-running task, run:
+cgate outline <file>            # symbols and shape
+cgate view <file> --symbol <Name>   # one symbol
+- Do not read whole files into context. Slice them.
+- The authoritative state is `.agent_state.json` and `STATE.md`; update them one fact per line.
+- Never let an old summary overwrite a newer fact. Supersede in place.

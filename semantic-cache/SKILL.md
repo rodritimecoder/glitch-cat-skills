@@ -49,3 +49,16 @@ $CACHE query "How to set up git worktrees for parallel subagents?"
 # 3. Check cache hit metrics
 $CACHE stats
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Semantic cache: ask it first
+Before sending a question that resembles one already answered, run:
+semantic-cache query "<question>"
+- On a hit, use the cached answer as-is and say it came from the cache.
+- On a miss, answer normally, then `semantic-cache store "<question>" "<verified answer>"`.
+- Only store answers you have verified, never a guess.

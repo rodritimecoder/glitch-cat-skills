@@ -128,3 +128,16 @@ Each execution appends to `evals`:
 - `eval_passed`: 1 if output passed quality check, 0 if failed
 - `fallback_model`: Name of frontier model if a speculative swap occurred
 - `cost_saved_usd`: Dollar savings compared to frontier baseline
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Routing: let the router pick the model
+Before answering, classify the request:
+eval-router route "<request>"
+- Easy requests go to local zero-cost models; hard ones escalate.
+- If the shadow verification fails, the router falls back to a frontier model automatically.
+- Never route a task that needs a tool call through the free tier without verifying the output.

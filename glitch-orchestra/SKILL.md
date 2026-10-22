@@ -48,3 +48,16 @@ $ORCHESTRA complete --id worker_01 --summary "Auth middleware refactored and ver
 # 4. Trigger completion alert
 $ORCHESTRA alert --message "All 4 worker tasks successfully completed!"
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Conducting
+Lead as a conductor, not as a worker:
+glitch-orchestra register --id <worker> --task "<task>" --term <tty>
+glitch-orchestra complete --id <worker> --summary "<verified summary>"
+- Dispatch to a dedicated session; do not hold the work in the lead's context.
+- A worker is complete when it says so and its summary is verifiable.

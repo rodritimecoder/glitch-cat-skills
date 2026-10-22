@@ -44,3 +44,16 @@ $SWARM record --scorecard '{"worker_id": "w1", "target": "auth", "status": "pass
 # 4. View live swarm status & remaining spend
 $SWARM status
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Swarm contract
+Before spending, write the contract:
+swarm init --goal "<hit list>" --budget <dollars> --tokens <n>
+swarm check --est-cost <c> --est-tokens <n>
+- Every worker returns a scorecard with the schema, not a markdown summary.
+- The budget ceiling is enforced in code. If the check says no, stop — do not find another way.

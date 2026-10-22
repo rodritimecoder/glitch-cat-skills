@@ -595,45 +595,48 @@ class NotesIndex:
         }
 
 
-RULE_VARIANTS = {
-    "full": """## Notes index: search it first
-Before you answer about my past work, decisions or notes, run:
-python {script} search "distinctive words"
-- Use the words the note itself would use. If nothing fits, search once more with different words.
-- Results are pointers. Open the file before you state a fact from it.
-- If the first line shows an error, or says the index is more than a day old, run: python {script} update
-""",
-    "lean": """## Notes index: search it first
-Before you answer about my past work, decisions or notes, run:
-python {script} search "distinctive words"
-- Use the words the note itself would use. If nothing fits, search once more with different words.
-- If the search found it, don't also grep.
-- If the first line shows an error, or says the index is more than a day old, run: python {script} update
-""",
-    "trust-snippet": """## Notes index: search it first
-Before you answer about my past work, decisions or notes, run:
-python {script} search "distinctive words"
-- Use the words the note itself would use. If nothing fits, search once more with different words.
-- Results are pointers. Open the file only if the snippet doesn't hold the answer.
-- If the search found it, don't also grep.
-- Before answering, search once more for anything newer on the same topic.
-- If the first line shows an error, or says the index is more than a day old, run: python {script} update
-""",
+RULE_BULLETS = {
+    "full": [
+        "- Use the words the note itself would use. If nothing fits, search once more with different words.",
+        "- Results are pointers. Open the file before you state a fact from it.",
+        "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
+    ],
+    "lean": [
+        "- Use the words the note itself would use. If nothing fits, search once more with different words.",
+        "- If the search found it, don't also grep.",
+        "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
+    ],
+    "trust-snippet": [
+        "- Use the words the note itself would use. If nothing fits, search once more with different words.",
+        "- Results are pointers. Open the file only if the snippet doesn't hold the answer.",
+        "- If the search found it, don't also grep.",
+        "- Before answering, search once more for anything newer on the same topic.",
+        "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
+    ],
 }
 
 RULE_START = "<!-- notes-index:start -->"
 RULE_END = "<!-- notes-index:end -->"
+RULE_TARGETS = ("agents", "claude")
+TARGET_FILENAME = {"agents": "AGENTS.md", "claude": "CLAUDE.md"}
 
 
-def rule_block(script: Path, variant: str = "full") -> str:
-    body = RULE_VARIANTS[variant].format(script=script)
+def rule_block(script: Path, variant: str = "full", target: str = "agents") -> str:
+    name = TARGET_FILENAME[target]
+    bullets = "\n".join(bullet.format(script=script) for bullet in RULE_BULLETS[variant])
+    body = (
+        "## Notes index: search it first\n"
+        f"{name} loads into every session. Before you answer about my past work, decisions or notes, run:\n"
+        f'python {script} search "distinctive words"\n'
+        f"{bullets}\n"
+    )
     return f"{RULE_START}\n{body}{RULE_END}\n"
 
 
-def apply_rule(folder: Path, script: Path, variant: str = "full") -> Path:
-    claude_md = folder / "CLAUDE.md"
-    existing = claude_md.read_text(encoding="utf-8") if claude_md.exists() else ""
-    block = rule_block(script, variant)
+def apply_rule(folder: Path, script: Path, variant: str = "full", target: str = "agents") -> Path:
+    target_file = folder / TARGET_FILENAME[target]
+    existing = target_file.read_text(encoding="utf-8") if target_file.exists() else ""
+    block = rule_block(script, variant, target)
     if RULE_START in existing:
         start = existing.index(RULE_START)
         end = existing.index(RULE_END) + len(RULE_END)
@@ -642,8 +645,8 @@ def apply_rule(folder: Path, script: Path, variant: str = "full") -> Path:
         if existing and not existing.endswith("\n"):
             existing += "\n"
         existing += "\n" + block
-    claude_md.write_text(existing, encoding="utf-8")
-    return claude_md
+    target_file.write_text(existing, encoding="utf-8")
+    return target_file
 
 
 def plan(folder: Path, chunk: int = DEFAULT_CHUNK) -> dict:

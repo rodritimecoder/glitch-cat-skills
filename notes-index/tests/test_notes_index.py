@@ -125,10 +125,26 @@ class TestNotesIndex(unittest.TestCase):
         script.write_text("#\n", encoding="utf-8")
         apply_rule(self.folder, script, "full")
         apply_rule(self.folder, script, "lean")
-        text = (self.folder / "CLAUDE.md").read_text(encoding="utf-8")
+        text = (self.folder / "AGENTS.md").read_text(encoding="utf-8")
         self.assertEqual(text.count("notes-index:start"), 1)
         self.assertIn("don't also grep", text)
-        print("  ✓ the CLAUDE.md rule is rewritten, never duplicated")
+        print("  ✓ the AGENTS.md rule is rewritten, never duplicated")
+
+    def test_14_rule_target_agents_by_default(self):
+        script = self.folder / "index.py"
+        script.write_text("#\n", encoding="utf-8")
+        path = apply_rule(self.folder, script, "full")
+        self.assertEqual(path.name, "AGENTS.md")
+        self.assertTrue(path.exists())
+        self.assertFalse((self.folder / "CLAUDE.md").exists())
+        print("  ✓ the rule lands in AGENTS.md by default")
+
+    def test_15_rule_target_claude_on_request(self):
+        script = self.folder / "index.py"
+        script.write_text("#\n", encoding="utf-8")
+        path = apply_rule(self.folder, script, "full", "claude")
+        self.assertEqual(path.name, "CLAUDE.md")
+        print("  ✓ CLAUDE.md is still available on request")
 
     def test_12_plan_counts_long_files(self):
         self.write("short.md", "short\n")

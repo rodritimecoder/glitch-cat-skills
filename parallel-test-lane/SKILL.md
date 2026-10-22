@@ -62,3 +62,16 @@ parallel-test-lane run --dir tests/ --out /tmp/test_report.json
 ## 🔒 Serial vs Parallel Partitioning Rule
 - Any test file marked with `# serial`, `@serial`, `// serial`, or `@pytest.mark.serial` is automatically placed into the **Serial Reserved Lane** and executed in single-threaded isolation (e.g. tests touching shared databases or fixed local ports).
 - All remaining independent unit/integration tests are load-balanced across $N$ CPU worker threads.
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Test lanes
+Run the suite through the lane planner:
+parallel-test-lane run --dir tests/ --lanes 8
+- Tests marked serial run alone, in isolation, one at a time.
+- Output is buffered per lane; read the aggregated report, not interleaved streams.
+- A lane failure is a failure. Do not re-run until it passes.

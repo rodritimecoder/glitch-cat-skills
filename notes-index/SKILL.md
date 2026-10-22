@@ -3,7 +3,7 @@ name: notes-index
 
 description: >
   Local ranked search over a Markdown notes folder — one SQLite FTS5 index, fingerprint-based refresh, Haiku-class
-  summaries, and a CLAUDE.md rule so the agent searches the index instead of grepping (Glitch Cat Club / Kem Glitch;
+  summaries, and an AGENTS.md rule so the agent searches the index instead of grepping (Glitch Cat Club / Kem Glitch;
   Reel DezGALzNCuf, artifact MdwChkFxkCKwwnToGVJXGX). Cuts memory-search token spend by up to half on a large notes
   vault. Use when answering questions about past work, decisions or notes, or when a folder of Markdown keeps growing.
 
@@ -44,7 +44,7 @@ first. One ranked query opens the one file that matters.
 | `index.py update` | Fingerprints every note, touches only what changed, drops deleted notes |
 | Summariser | Haiku (or the local model on `:8080`) writes topic + fact rows beside the raw text |
 | `index.py search` | One ranked query, reciprocal rank fusion, recency bonus, health line first |
-| `CLAUDE.md` rule | Tells the agent to search the index before answering |
+| `AGENTS.md` rule | Tells the agent to search the index before answering (write `CLAUDE.md` with `--target claude`) |
 | Timer | Refreshes every 6 hours, silently, no window |
 
 ## 🖥️ CLI Quickstart
@@ -83,11 +83,11 @@ Results are **pointers**. Open the file before stating a fact from it.
 | Command | Purpose |
 | :--- | :--- |
 | `plan` | Count notes, notes needing summaries, estimated minutes |
-| `init` | Create the index, write the `CLAUDE.md` rule, optionally install the timer (`--yes` to ingest now) |
+| `init` | Create the index, write the `AGENTS.md` rule, optionally install the timer (`--yes` to ingest now); `--target agents\|claude` chooses the rule file |
 | `update` | Re-index new/changed/removed notes (`--strict` treats summary failures as run failures) |
 | `search` | Ranked search; `--after YYYY-MM-DD`, `--limit N` (default 5) |
 | `status` | Files, rows by kind, freshness, last error, last log line |
-| `rule` | Print the `CLAUDE.md` block, or `--apply` it; `--variant full\|lean\|trust-snippet` |
+| `rule` | Print the `AGENTS.md` block, or `--apply` it; `--variant full\|lean\|trust-snippet`, `--target agents\|claude` |
 | `timer` | `install` / `status` / `uninstall` the 6-hour refresh |
 
 ## ⚖️ The Levers (change one at a time, compare)
@@ -96,6 +96,7 @@ Results are **pointers**. Open the file before stating a fact from it.
 | :--- | :--- |
 | `--limit 5` (default) | Each search prints about a page of results instead of two |
 | `rule --variant lean` | Adds *"If the search found it, don't also grep"* — the biggest waste in Kem's testing |
+| `--target claude` | Writes the rule to `CLAUDE.md` instead of `AGENTS.md` |
 | `rule --variant trust-snippet` | Opens the file only when the snippet doesn't hold the answer, and searches once more for anything newer |
 | `--no-summaries` | Skip the summary pass: fewer tokens spent indexing, weaker recall on long notes |
 | `--workers N` | Parallel summary calls (default 6) |
@@ -124,4 +125,18 @@ python3 tests/test_notes_index.py
 ## 📚 Reference
 
 - `references/field-notes.md` — the full "Half the Tokens" field notes, as published
+- `references/agents-blurbs.md` — paste-ready `AGENTS.md` rule blocks for the whole Glitch Cat suite, with a shortlist that does not overlap
 - `references/build-prompt.md` — the copy-paste build prompt from section 08
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Notes index: search it first
+Before you answer about my past work, decisions or notes, run:
+notes-index --folder <notes-folder> search "distinctive words"
+- Use the words the note itself would use. If nothing fits, search once more with different words.
+- Results are pointers. Open the file before you state a fact from it.
+- If the first line shows an error, or says the index is more than a day old, run: notes-index --folder <notes-folder> update

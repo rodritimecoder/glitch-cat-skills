@@ -134,3 +134,16 @@ Output:
 ✓ clash · raised and asked
 ✓ queue · max 2, 9/9 queued starts
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Coordination
+Route work through the harness, not through ad-hoc messages:
+projects-harness route "<question or task>"
+- Every worker gets one brief (intent) and one owner instruction (verbatim), and they never mix.
+- Memory is one fact per line, capped at 200 lines; supersede in place, never append a duplicate.
+- A static rule and a memory entry that clash is a stop-and-ask, not a judgement call.

@@ -115,3 +115,15 @@ glitch-cat/graph-memory/
     ├── distil.py            # Verbatim quote extractor
     └── test_search.py       # Test suite
 ```
+
+---
+
+---
+
+## AGENTS.md rule
+
+## Memory: query the graph before you search
+When a question is about people, owners, decisions or relationships in this repo's knowledge graph, run:
+graph-memory recall "<question>" --hops 2 --top-k 8
+- The answer is a pointer to a source line. Quote it exactly, do not paraphrase it.
+- If the recall returns nothing, fall back to `graph-memory search "<words>" --table`.

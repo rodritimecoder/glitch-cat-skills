@@ -7,6 +7,7 @@
     "graph-memory",
     "guard-hooks",
     "jev-decision",
+    "kem-dev-loop",
     "kem-thought",
     "notes-index",
     "parallel-test-lane",

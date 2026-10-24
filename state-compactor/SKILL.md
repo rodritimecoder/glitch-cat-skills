@@ -8,16 +8,7 @@ description: >
   (context-gated AST reader & local-LLM query projection), preserving 100% of facts across
   660,000+ token sessions without context poisoning.
 
-license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
 compatibility: "Requires the local Qwen3.6-35B Genesis LLM on :8080 for `cgate query` projection (see the `local-llm` skill). `cgate view` and `cgate grep` need no server."
-metadata:
-  creator: "kem_glitch"
-  source_reels_1_id: "DdyqnietB8C"
-  source_reels_1_url: "https://www.instagram.com/reel/DdyqnietB8C/"
-  source_reels_1_vault_note: "kem_glitch/2026-10-16_autonomous_state_file_compaction/notes.md"
-  source_reels_2_id: "DdME5hsNRju"
-  source_reels_2_url: "https://www.instagram.com/reel/DdME5hsNRju/"
-  source_reels_2_vault_note: "kem_glitch/2026-10-17_memory_context_management_sessions/notes.md"
 allowed-tools: "Bash(state-compactor:*) Bash(python3:*) Read Write"
 ---
 

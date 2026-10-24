@@ -7,14 +7,7 @@ description: >
   Reel DezGALzNCuf, artifact MdwChkFxkCKwwnToGVJXGX). Cuts memory-search token spend by up to half on a large notes
   vault. Use when answering questions about past work, decisions or notes, or when a folder of Markdown keeps growing.
 
-license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
 compatibility: "Python 3.10+ with sqlite3 FTS5. Summaries need the `claude` CLI (haiku) or the local model on :8080."
-metadata:
-  creator: "kem_glitch"
-  source_reel_id: "DezGALzNCuf"
-  source_reel_url: "https://www.instagram.com/reel/DezGALzNCuf/"
-  source_artifact_url: "https://claude.ai/artifact/MdwChkFxkCKwwnToGVJXGX"
-  source_reel_vault_note: "kem_glitch/2026-10-22_sqlite_fts_index_for_native_memory_search/notes.md"
 allowed-tools: "Bash(python3:*) Bash(notes-index:*) Read Write Edit"
 ---
 

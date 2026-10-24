@@ -8,11 +8,6 @@ description: >
   "what would kem do", "kem principles", or names a principle
   (e.g. "code decides wherever it can", "the poison sits upstream",
   "always run the control").
-
-license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
-metadata:
-  author: "rodri"
-  source: "Glitch Cat Club — kem_glitch (creator-vault/kem_glitch, 24 mined transcripts)"
 ---
 
 # Kem Thought (`kem-thought`)

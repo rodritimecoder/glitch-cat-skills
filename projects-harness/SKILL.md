@@ -8,14 +8,7 @@ description: >
   atomic memory updates with in-place history superseding, a 200-line memory load cap, static rule vs
   memory clash detection, and a concurrency-throttled task queue (max 2).
 
-license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
 compatibility: "Requires Python 3.10+. No network access needed."
-metadata:
-  creator: "kem_glitch"
-  source_reel_id: "DejvUBotWJD"
-  source_reel_url: "https://www.instagram.com/reel/DejvUBotWJD/"
-  source_reel_vault_note: "kem_glitch/2026-10-17_claude_projects_beta_architecture/notes.md"
-  version: "1.0.0"
 allowed-tools: "Bash(python3:*) Read Write"
 ---
 

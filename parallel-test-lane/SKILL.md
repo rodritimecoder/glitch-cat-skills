@@ -7,13 +7,7 @@ description: >
   slashing 40-60 minute regression suites down to 7-8 minutes with clean non-interleaved output buffering
   and aggregated pass/fail reporting.
 
-license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
 compatibility: "Requires Python 3.10+ and a pytest suite to partition."
-metadata:
-  creator: "kem_glitch"
-  source_reel_id: "DbSgqTXt-3c"
-  source_reel_url: "https://www.instagram.com/reel/DbSgqTXt-3c/"
-  source_reel_vault_note: "kem_glitch/2026-10-17_regression_test_suite_parallel_lanes/notes.md"
 allowed-tools: "Bash(parallel-test-lane:*) Bash(python3:*) Bash(pytest:*) Read Write"
 ---
 

@@ -6,13 +6,7 @@ description: >
   deterministic SQLite k-hop graph traversal (<2ms), entity deduplication via UUID5 & aliases,
   and hybrid BM25 + bge-small-en-v1.5 (384d) RRF search with exact-quote distillation.
 
-license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
 compatibility: "Requires the local embedding endpoint on :8087 for the hybrid BM25 and vector leg. The slot also hosts EmbeddingGemma-2 (768d); an index built with one is not comparable with the other, so rag.db records which model built it."
-metadata:
-  creator: "kem_glitch"
-  source_reel_id: "DcTIPKyt7Am"
-  source_reel_url: "https://www.instagram.com/reel/DcTIPKyt7Am/"
-  source_reel_vault_note: "kem_glitch/2026-10-17_graph_memory_rant_and_fallacies/notes.md"
 allowed-tools: "Bash(graph-memory:*) Bash(python3:*) Read Write"
 ---
 

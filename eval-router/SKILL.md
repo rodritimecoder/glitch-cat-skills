@@ -8,13 +8,7 @@ description: >
   or free tiers, verifies output quality asynchronously or blocking with automated frontier fallback,
   and continuously harvests failures into training evaluations for 30-40% token cost reduction.
 
-license: "Proprietary. Complete terms are in the LICENSE file at the repository root."
 compatibility: "Requires the local vllm-d3-mini endpoint on :8083. The optional hosted tiers need OPENROUTER_API_KEY and GEMINI_API_KEY."
-metadata:
-  creator: "kem_glitch"
-  source_reel_id: "DdWLJa2tjq6"
-  source_reel_url: "https://www.instagram.com/reel/DdWLJa2tjq6/"
-  source_reel_vault_note: "kem_glitch/2026-10-17_self_calibrating_eval_router_and_shadow_verifier/notes.md"
 allowed-tools: "Bash(eval-router:*) Bash(python3:*) Read Write"
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: kem-thought
 description: >
-  Kem Glitch's thought skills: 27 steering principles distilled from the
+  Kem Glitch's thought skills: 28 steering principles distilled from the
   Glitch Cat Club transcripts, plus the /kem-mode front door. Use when
   building or operating agent systems, harnesses, swarms, memory/retrieval
   layers, evaluation pipelines, or when the operator says "use kem mode",
@@ -50,13 +50,13 @@ The operator can steer by principle name mid-session. Load that file and obey it
 
 Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-sits-upstream.md`.
 
-### The 27 principles
+### The 28 principles
 
 **The law** — `code-decides` · `move-jobs-to-code` · `these-are-just-software`
 
 **Harness & gates** — `fix-the-harness-first` · `tag-every-step` ·
 `a-gate-is-code-that-can-fail` · `never-let-a-model-overrule-code` ·
-`rules-in-code-not-context` · `write-the-route-in-code`
+`rules-in-code-not-context` · `write-the-route-in-code` · `start-low-step-up`
 
 **Parallelism & state** — `isolate-before-you-parallelise` · `fresh-context-judges` ·
 `check-the-judge-too` · `narrow-lens-owned-files` ·
@@ -79,7 +79,7 @@ Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-
 | Parallel / multi-agent work | `isolate-before-you-parallelise`, `start-with-a-workflow` | `narrow-lens-owned-files`, `contain-the-swarm` |
 | Review or judge of someone else's work | `fresh-context-judges`, `check-the-judge-too` | `hold-out-the-tests` |
 | Memory / retrieval / RAG | `model-the-domain`, `context-poisoning` | `context-is-a-budget`, `never-let-a-summary-be-the-handoff` |
-| Performance or cost | `move-jobs-to-code`, `always-run-the-control` | `measure-then-claim`, `dont-spawn-an-agent-for-a-tiny-job` |
+| Performance or cost | `move-jobs-to-code`, `always-run-the-control` | `measure-then-claim`, `dont-spawn-an-agent-for-a-tiny-job`, `start-low-step-up` |
 | Long-running session losing state | `never-let-a-summary-be-the-handoff`, `rules-in-code-not-context` | `label-provenance` |
 
 ### Non-negotiables

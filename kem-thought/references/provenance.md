@@ -40,6 +40,7 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 | `measure-then-claim` | Self-Calibrating Eval Router | `DdWLJa2tjq6` | 01:40 | `2026-10-17_self_calibrating_eval_router_and_shadow_verifier` |
 | `label-provenance` | Claude Projects Beta Architecture | `DejvUBotWJD` | 01:06 | `2026-10-17_claude_projects_beta_architecture` |
 | `foundations-over-shiny-objects` | Memory in AI Context & Retrieval | `DcI_-FStEqz` | 04:04 | `2026-10-16_memory_in_ai_context_and_retrieval_architecture` |
+| `start-low-step-up` | Which Effort? Which Model? Routing via Tests | `De4PXaltWfP` | 00:48 | `2026-10-25_which_effort_which_model_routing` |
 
 ## Talks mined
 
@@ -71,6 +72,7 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 | `2026-10-21_graph_is_not_obsidian` | Modelling is the work | `model-the-domain` |
 | `2026-10-21_software_factory_reaction_to_zazencodes` | Gates must not be agent verdicts | `move-jobs-to-code`, `never-let-a-model-overrule-code`, `write-the-route-in-code` |
 | `2026-10-21_standard_technical_english` | Rules as hooks, self-correction | `rules-in-code-not-context` |
+| `2026-10-25_which_effort_which_model_routing` | Task definition, SWE-bench testing, effort costs, optimistic escalation | `start-low-step-up`, `code-decides` |
 
 ## Known gaps
 

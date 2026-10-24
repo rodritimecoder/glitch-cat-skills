@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os
+import sys
+from pathlib import Path
+
+bin_path = Path(__file__).resolve().parent.parent / "bin" / "cgate"
+if bin_path.is_file() and os.access(bin_path, os.X_OK):
+    os.execv(str(bin_path), [str(bin_path)] + sys.argv[1:])
+
 import argparse
 import ast
 import json
-import os
 import re
 import subprocess
-import sys
 import urllib.request
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 # `query` asks for prose, which the vllm-d3-mini decision model cannot emit --

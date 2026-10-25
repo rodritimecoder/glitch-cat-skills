@@ -250,6 +250,65 @@ class TestNotesIndex(unittest.TestCase):
         self.assertTrue(labels[-1].startswith("local "), labels)
         print("  ✓ the hosted model is chosen before the local box")
 
+    def _with_pool(self):
+        return mock.patch.dict(os.environ, {"NOTES_INDEX_API_KEY": "key-one,key-two"}, clear=False), mock.patch.object(
+            notes_index_core, "KEY_FILES", ()
+        )
+
+    def test_24_a_transient_failure_moves_to_the_next_key(self):
+        env, files = self._with_pool()
+        with env, files, mock.patch.object(
+            notes_index_core.NotesIndex,
+            "_post_chat",
+            side_effect=[(None, 503, "HTTP 503 Service Unavailable"), ('{"ok": 1}', 200, "")],
+        ) as post:
+            self.assertEqual(self.index._call_api_model("prompt"), '{"ok": 1}')
+            self.assertEqual(post.call_count, 2)
+        print("  ✓ a 503 tries the second key instead of giving up")
+
+    def test_25_an_empty_reply_moves_to_the_next_key(self):
+        env, files = self._with_pool()
+        with env, files, mock.patch.object(
+            notes_index_core.NotesIndex,
+            "_post_chat",
+            side_effect=[(None, 200, "empty content (finish_reason=length)"), ('{"ok": 2}', 200, "")],
+        ) as post:
+            self.assertEqual(self.index._call_api_model("prompt"), '{"ok": 2}')
+            self.assertEqual(post.call_count, 2)
+        print("  ✓ truncated empty content is retried, not accepted")
+
+    def test_26_a_bad_request_does_not_burn_the_second_key(self):
+        env, files = self._with_pool()
+        with env, files, mock.patch.object(
+            notes_index_core.NotesIndex,
+            "_post_chat",
+            side_effect=[(None, 400, "HTTP 400 Bad Request"), ('{"never": 1}', 200, "")],
+        ) as post:
+            self.assertIsNone(self.index._call_api_model("prompt"))
+            self.assertEqual(post.call_count, 1)
+        self.assertIn("HTTP 400", self.index._api_error)
+        print("  ✓ a 400 fails fast instead of spending the second key")
+
+    def test_27_the_failure_message_carries_the_reason(self):
+        self.index._providers = lambda: [
+            (f"{self.index._api_model()} @ somewhere", self.index._call_api_model)
+        ]
+        with mock.patch.object(
+            notes_index_core.NotesIndex,
+            "_post_chat",
+            return_value=(None, 502, "HTTP 502 Bad Gateway"),
+        ):
+            with self.assertRaises(notes_index_core.SummarizerUnavailable) as caught:
+                self.index._call_summarizer("prompt")
+        self.assertIn("HTTP 502", str(caught.exception))
+        print("  ✓ the error names the status instead of saying 'no answer'")
+
+    def test_28_the_budget_grows_with_a_long_note(self):
+        self.assertEqual(self.index._api_max_tokens(1_000), notes_index_core.DEFAULT_API_MAX_TOKENS)
+        self.assertGreaterEqual(self.index._api_max_tokens(20_000), 9_000)
+        self.assertEqual(self.index._api_max_tokens(10_000_000), 16_000)
+        print("  ✓ a long note gets a bigger answer budget, capped at 16k")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

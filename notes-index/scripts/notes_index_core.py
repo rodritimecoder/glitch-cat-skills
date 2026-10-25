@@ -74,8 +74,8 @@ DEFAULT_LOCAL_MAX_TOKENS = 1600
 DEFAULT_LOCAL_URL = "http://127.0.0.1:8080/v1/chat/completions"
 KEY_FILES = (Path.home() / ".agent_keys.env",)
 KEY_NAMES = ("NOTES_INDEX_API_KEY", "NOTES_INDEX_API_KEYS", "NVIDIA_API_KEYS", "NVIDIA_API_KEY")
-KEY_RETRY_STATUS = (401, 403, 429)
-SUMMARIZER_TIMEOUT = 180
+FATAL_STATUS = (400, 404, 422)
+DEFAULT_SUMMARIZER_TIMEOUT = 300
 
 
 class IndexError_(RuntimeError):
@@ -345,11 +345,20 @@ class NotesIndex:
     def _api_model(self) -> str:
         return os.environ.get("NOTES_INDEX_MODEL", DEFAULT_API_MODEL)
 
-    def _api_max_tokens(self) -> int:
+    def _api_max_tokens(self, prompt_chars: int = 0) -> int:
         try:
-            return max(512, int(os.environ.get("NOTES_INDEX_MAX_TOKENS", DEFAULT_API_MAX_TOKENS)))
+            base = max(512, int(os.environ.get("NOTES_INDEX_MAX_TOKENS", DEFAULT_API_MAX_TOKENS)))
         except ValueError:
-            return DEFAULT_API_MAX_TOKENS
+            base = DEFAULT_API_MAX_TOKENS
+        # A reasoning model spends tokens before it answers. Half a token per
+        # input character keeps a long note from truncating into empty content.
+        return min(16000, max(base, prompt_chars // 2))
+
+    def _timeout(self) -> int:
+        try:
+            return max(30, int(os.environ.get("NOTES_INDEX_TIMEOUT", DEFAULT_SUMMARIZER_TIMEOUT)))
+        except ValueError:
+            return DEFAULT_SUMMARIZER_TIMEOUT
 
     def _local_url(self) -> str:
         return os.environ.get("NOTES_INDEX_LOCAL_URL", DEFAULT_LOCAL_URL)
@@ -388,13 +397,15 @@ class NotesIndex:
                 continue
             if reply and reply.strip():
                 return reply
-            failures.append(f"{label}: no answer")
+            reason = "no answer"
+            if label.startswith(self._api_model()) and getattr(self, "_api_error", None):
+                reason = self._api_error
+            failures.append(f"{label}: {reason}")
         tried = "; ".join(failures) if failures else "no provider configured"
         raise SummarizerUnavailable(f"every summarizer failed ({tried})")
 
-    @staticmethod
-    def _call_command(argv: list, prompt: str) -> Optional[str]:
-        proc = subprocess.run(argv, input=prompt, capture_output=True, text=True, timeout=SUMMARIZER_TIMEOUT)
+    def _call_command(self, argv: list, prompt: str) -> Optional[str]:
+        proc = subprocess.run(argv, input=prompt, capture_output=True, text=True, timeout=self._timeout())
         if proc.returncode == 0 and proc.stdout.strip():
             return proc.stdout
         return None
@@ -402,16 +413,28 @@ class NotesIndex:
     def _call_api_model(self, prompt: str) -> Optional[str]:
         url = self._api_url()
         model = self._api_model()
+        budget = self._api_max_tokens(len(prompt))
+        attempts = []
         for key in api_key_pool():
-            body, status = self._post_chat(url, model, key, prompt, self._api_max_tokens())
+            body, status, detail = self._post_chat(url, model, key, prompt, budget, self._timeout())
             if body:
+                self._api_error = None
                 return body
-            if status not in KEY_RETRY_STATUS:
-                return None
+            attempts.append(detail or f"HTTP {status}")
+            if status in FATAL_STATUS:
+                break
+        self._api_error = attempts[-1] if attempts else "no API key found"
         return None
 
     @staticmethod
-    def _post_chat(url: str, model: str, key: str, prompt: str, max_tokens: int = DEFAULT_API_MAX_TOKENS) -> tuple:
+    def _post_chat(
+        url: str,
+        model: str,
+        key: str,
+        prompt: str,
+        max_tokens: int = DEFAULT_API_MAX_TOKENS,
+        timeout: int = DEFAULT_SUMMARIZER_TIMEOUT,
+    ) -> tuple:
         payload = json.dumps(
             {
                 "model": model,
@@ -424,22 +447,34 @@ class NotesIndex:
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {key}"}
         request = urllib.request.Request(url, data=payload, headers=headers)
         try:
-            with urllib.request.urlopen(request, timeout=SUMMARIZER_TIMEOUT) as response:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 body = json.loads(response.read().decode("utf-8"))
-            return body["choices"][0]["message"]["content"], 200
         except urllib.error.HTTPError as exc:
-            return None, exc.code
-        except (urllib.error.URLError, OSError, ValueError, KeyError, IndexError):
-            return None, 0
+            return None, exc.code, f"HTTP {exc.code} {exc.reason}"
+        except (urllib.error.URLError, OSError) as exc:
+            return None, 0, f"{type(exc).__name__}: {exc}"
+        except (ValueError, KeyError, IndexError) as exc:
+            return None, 200, f"unreadable response: {type(exc).__name__}: {exc}"
+
+        try:
+            choice = body["choices"][0]
+            content = choice["message"]["content"]
+        except (KeyError, IndexError, TypeError) as exc:
+            return None, 200, f"response has no choices[0].message.content ({exc})"
+        if content and content.strip():
+            return content, 200, ""
+        finish = choice.get("finish_reason", "unknown")
+        return None, 200, f"empty content (finish_reason={finish}, max_tokens={max_tokens})"
 
     def _call_local_model(self, prompt: str) -> Optional[str]:
         key = os.environ.get("NOTES_INDEX_LOCAL_KEY", "local")
-        body, _ = self._post_chat(
+        body, _status, _detail = self._post_chat(
             self._local_url(),
             os.environ.get("NOTES_INDEX_LOCAL_MODEL", "qwen3.6-35b"),
             key,
             prompt,
             DEFAULT_LOCAL_MAX_TOKENS,
+            self._timeout(),
         )
         return body
 

@@ -120,7 +120,11 @@ Providers are tried in order, and the first that answers wins:
 
 Keys are read from the environment **and** from `~/.agent_keys.env`, because the 6-hour refresh runs from a systemd user unit that never loads a shell profile. A key exported only in `.bashrc` fails there silently.
 
-`NOTES_INDEX_MAX_TOKENS` defaults to **6000**, not 1600: the default model reasons before it answers, and at 1600 the whole budget went on thinking and the reply came back empty.
+`NOTES_INDEX_MAX_TOKENS` defaults to **6000**, not 1600: the default model reasons before it answers, and at 1600 the whole budget went on thinking and the reply came back empty. It scales to half a token per input character and caps at 16k, so a 20k-character note gets a bigger answer budget than a short one.
+
+`NOTES_INDEX_TIMEOUT` defaults to **300 seconds**. Large notes take minutes on a reasoning model, and the previous 180s limit is what lost two writes in the 2026-10-25 run.
+
+Failures are retried across the key pool: a 5xx, a timeout, or an empty reply moves to the next key. Only 400/404/422 fail fast, because a different key cannot fix a bad request. The error line reports what actually happened (`HTTP 502 Bad Gateway`, `empty content (finish_reason=length)`, `TimeoutError`) instead of `no answer`.
 
 `notes-index status` prints the resolved provider, so a failure names the thing that died:
 

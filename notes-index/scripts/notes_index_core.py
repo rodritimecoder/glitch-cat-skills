@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import sqlite3
 import subprocess
@@ -66,6 +67,16 @@ SECRET_PATTERNS = [
     (re.compile(r"(?i)bearer\s+[A-Za-z0-9._\-]{20,}"), "Bearer ***"),
 ]
 
+DEFAULT_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+DEFAULT_API_MODEL = "z-ai/glm-5.3-flash"
+DEFAULT_API_MAX_TOKENS = 6000
+DEFAULT_LOCAL_MAX_TOKENS = 1600
+DEFAULT_LOCAL_URL = "http://127.0.0.1:8080/v1/chat/completions"
+KEY_FILES = (Path.home() / ".agent_keys.env",)
+KEY_NAMES = ("NOTES_INDEX_API_KEY", "NOTES_INDEX_API_KEYS", "NVIDIA_API_KEYS", "NVIDIA_API_KEY")
+KEY_RETRY_STATUS = (401, 403, 429)
+SUMMARIZER_TIMEOUT = 180
+
 
 class IndexError_(RuntimeError):
     pass
@@ -87,6 +98,41 @@ def mask_secrets(text: str) -> str:
     for pattern, replacement in SECRET_PATTERNS:
         text = pattern.sub(replacement, text)
     return text
+
+
+def parse_key_file(path: Path) -> dict:
+    values = {}
+    if not path.is_file():
+        return values
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export "):].strip()
+        name, sep, value = line.partition("=")
+        if not sep:
+            continue
+        values[name.strip()] = value.strip().strip("'\"")
+    return values
+
+
+def api_key_pool() -> list:
+    pool = []
+
+    def add(value: str) -> None:
+        for key in value.split(","):
+            key = key.strip()
+            if key and key not in pool:
+                pool.append(key)
+
+    for name in KEY_NAMES:
+        add(os.environ.get(name, ""))
+    for path in KEY_FILES:
+        for name, value in parse_key_file(path).items():
+            if name in KEY_NAMES:
+                add(value)
+    return pool
 
 
 def sha256_text(text: str) -> str:
@@ -293,45 +339,109 @@ class NotesIndex:
             f"FILE: {path}\n\n---\n{text[:20000]}\n---"
         )
 
-    def _call_summarizer(self, prompt: str) -> str:
+    def _api_url(self) -> str:
+        return os.environ.get("NOTES_INDEX_API_URL", DEFAULT_API_URL)
+
+    def _api_model(self) -> str:
+        return os.environ.get("NOTES_INDEX_MODEL", DEFAULT_API_MODEL)
+
+    def _api_max_tokens(self) -> int:
+        try:
+            return max(512, int(os.environ.get("NOTES_INDEX_MAX_TOKENS", DEFAULT_API_MAX_TOKENS)))
+        except ValueError:
+            return DEFAULT_API_MAX_TOKENS
+
+    def _local_url(self) -> str:
+        return os.environ.get("NOTES_INDEX_LOCAL_URL", DEFAULT_LOCAL_URL)
+
+    def _providers(self) -> list:
+        providers = []
+        override = os.environ.get("NOTES_INDEX_SUMMARIZER_CMD", "").strip()
+        if override:
+            argv = shlex.split(override)
+            providers.append((f"cmd:{argv[0]}", lambda prompt: self._call_command(argv, prompt)))
         claude = shutil.which("claude")
         if claude:
-            try:
-                proc = subprocess.run(
-                    [claude, "-p", "--model", "haiku"],
-                    input=prompt,
-                    capture_output=True,
-                    text=True,
-                    timeout=180,
-                )
-                if proc.returncode == 0 and proc.stdout.strip():
-                    return proc.stdout
-            except (OSError, subprocess.SubprocessError):
-                pass
-        local = self._call_local_model(prompt)
-        if local:
-            return local
-        raise SummarizerUnavailable("no summarizer available (need `claude -p` CLI or the local model on :8080)")
+            providers.append(("claude -p --model haiku", lambda prompt: self._call_command([claude, "-p", "--model", "haiku"], prompt)))
+        if api_key_pool() or os.environ.get("NOTES_INDEX_API_KEY"):
+            providers.append((f"{self._api_model()} @ {self._api_url()}", self._call_api_model))
+        providers.append((f"local {self._local_url()}", self._call_local_model))
+        return providers
 
-    def _call_local_model(self, prompt: str) -> Optional[str]:
-        url = os.environ.get("NOTES_INDEX_LOCAL_URL", "http://127.0.0.1:8080/v1/chat/completions")
-        model = os.environ.get("NOTES_INDEX_LOCAL_MODEL", "qwen3.6-35b")
+    def summarizer_label(self) -> str:
+        providers = self._providers()
+        if not providers:
+            return "none"
+        label = providers[0][0]
+        keys = len(api_key_pool())
+        if label.startswith(self._api_model()):
+            return f"{label} ({keys} key{'s' if keys != 1 else ''})"
+        return label
+
+    def _call_summarizer(self, prompt: str) -> str:
+        failures = []
+        for label, call in self._providers():
+            try:
+                reply = call(prompt)
+            except (OSError, subprocess.SubprocessError, urllib.error.URLError, ValueError, KeyError, IndexError) as exc:
+                failures.append(f"{label}: {exc}")
+                continue
+            if reply and reply.strip():
+                return reply
+            failures.append(f"{label}: no answer")
+        tried = "; ".join(failures) if failures else "no provider configured"
+        raise SummarizerUnavailable(f"every summarizer failed ({tried})")
+
+    @staticmethod
+    def _call_command(argv: list, prompt: str) -> Optional[str]:
+        proc = subprocess.run(argv, input=prompt, capture_output=True, text=True, timeout=SUMMARIZER_TIMEOUT)
+        if proc.returncode == 0 and proc.stdout.strip():
+            return proc.stdout
+        return None
+
+    def _call_api_model(self, prompt: str) -> Optional[str]:
+        url = self._api_url()
+        model = self._api_model()
+        for key in api_key_pool():
+            body, status = self._post_chat(url, model, key, prompt, self._api_max_tokens())
+            if body:
+                return body
+            if status not in KEY_RETRY_STATUS:
+                return None
+        return None
+
+    @staticmethod
+    def _post_chat(url: str, model: str, key: str, prompt: str, max_tokens: int = DEFAULT_API_MAX_TOKENS) -> tuple:
         payload = json.dumps(
             {
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.2,
-                "max_tokens": 1600,
+                "max_tokens": max_tokens,
                 "stream": False,
             }
         ).encode("utf-8")
-        request = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {key}"}
+        request = urllib.request.Request(url, data=payload, headers=headers)
         try:
-            with urllib.request.urlopen(request, timeout=180) as response:
+            with urllib.request.urlopen(request, timeout=SUMMARIZER_TIMEOUT) as response:
                 body = json.loads(response.read().decode("utf-8"))
-            return body["choices"][0]["message"]["content"]
+            return body["choices"][0]["message"]["content"], 200
+        except urllib.error.HTTPError as exc:
+            return None, exc.code
         except (urllib.error.URLError, OSError, ValueError, KeyError, IndexError):
-            return None
+            return None, 0
+
+    def _call_local_model(self, prompt: str) -> Optional[str]:
+        key = os.environ.get("NOTES_INDEX_LOCAL_KEY", "local")
+        body, _ = self._post_chat(
+            self._local_url(),
+            os.environ.get("NOTES_INDEX_LOCAL_MODEL", "qwen3.6-35b"),
+            key,
+            prompt,
+            DEFAULT_LOCAL_MAX_TOKENS,
+        )
+        return body
 
     @staticmethod
     def _parse_summary(raw: str) -> dict:
@@ -625,6 +735,7 @@ class NotesIndex:
             "last_refreshed": self.get_state("last_refreshed"),
             "last_error": self.get_state("last_error"),
             "last_log_line": last_line,
+            "summarizer": self.summarizer_label(),
             "health": self.health_line(),
         }
 

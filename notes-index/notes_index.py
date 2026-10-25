@@ -171,6 +171,7 @@ def main(argv=None) -> int:
                 print(f"last refreshed: {result['last_refreshed']}")
                 print(f"last error    : {result['last_error'] or 'none'}")
                 print(f"last log line : {result['last_log_line'] or 'none'}")
+                print(f"summarizer    : {result['summarizer']}")
             return 0
 
         if args.command == "rule":

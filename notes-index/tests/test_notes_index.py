@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 import json
+import os
 import shutil
 import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 import sys
 
 sys.path.append(str(Path(__file__).resolve().parent.parent / "scripts"))
-from notes_index_core import NotesIndex, apply_rule, mask_secrets, plan, rule_block  # noqa: E402
+import notes_index_core  # noqa: E402
+from notes_index_core import NotesIndex, api_key_pool, apply_rule, mask_secrets, plan, rule_block  # noqa: E402
 
 
 class TestNotesIndex(unittest.TestCase):
@@ -210,6 +213,37 @@ class TestNotesIndex(unittest.TestCase):
         masked = mask_secrets("token: ghp_abcdefghijklmnopqrstuvwxyz012345")
         self.assertNotIn("ghp_abcdefghijklmnopqrstuvwxyz012345", masked)
         print("  ✓ secret masking covers the common key shapes")
+
+    def test_21_key_pool_reads_exported_key_files(self):
+        key_file = self.folder / "keys.env"
+        key_file.write_text(
+            "# comment\nexport NVIDIA_API_KEY=nvapi-one\nNVIDIA_API_KEYS=nvapi-two,nvapi-one\n",
+            encoding="utf-8",
+        )
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(notes_index_core, "KEY_FILES", (key_file,)):
+            self.assertEqual(api_key_pool(), ["nvapi-one", "nvapi-two"])
+        print("  ✓ the key pool parses exported key files without duplicates")
+
+    def test_22_a_dead_provider_falls_through_to_the_next(self):
+        reply = '{"topics": [{"title": "T", "question": "Q", "summary": "S"}], "facts": [{"text": "F"}]}'
+
+        def dead(prompt):
+            raise OSError("connection refused")
+
+        self.index._providers = lambda: [("dead", dead), ("alive", lambda prompt: reply)]
+        summary = self.index.summarize(self.folder / "note.md", "body " * 2000)
+        self.assertEqual(summary["topics"][0]["title"], "T")
+        self.assertEqual(summary["facts"][0]["text"], "F")
+        print("  ✓ a dead summarizer falls through to the next provider")
+
+    def test_23_frontier_api_precedes_the_local_fallback(self):
+        with mock.patch.dict(os.environ, {"NVIDIA_API_KEY": "nvapi-test"}, clear=True), mock.patch.object(
+            notes_index_core, "KEY_FILES", ()
+        ):
+            labels = [label for label, _ in self.index._providers()]
+        self.assertTrue(labels[0].startswith("z-ai/glm-5.3-flash"), labels)
+        self.assertTrue(labels[-1].startswith("local "), labels)
+        print("  ✓ the hosted model is chosen before the local box")
 
 
 if __name__ == "__main__":

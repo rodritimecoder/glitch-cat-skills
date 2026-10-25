@@ -7,7 +7,7 @@ description: >
   Reel DezGALzNCuf, artifact MdwChkFxkCKwwnToGVJXGX). Cuts memory-search token spend by up to half on a large notes
   vault. Use when answering questions about past work, decisions or notes, or when a folder of Markdown keeps growing.
 
-compatibility: "Python 3.10+ with sqlite3 FTS5. Summaries need the `claude` CLI (haiku) or the local model on :8080."
+compatibility: "Python 3.10+ with sqlite3 FTS5. Summaries use a hosted model over plain HTTPS; a local OpenAI-compatible endpoint is an optional fallback."
 allowed-tools: "Bash(python3:*) Bash(notes-index:*) Read Write Edit"
 ---
 
@@ -35,7 +35,7 @@ first. One ranked query opens the one file that matters.
 | :--- | :--- |
 | `notes.db` | One SQLite file, FTS5 index (porter stemming) over raw, summary and fact rows |
 | `index.py update` | Fingerprints every note, touches only what changed, drops deleted notes |
-| Summariser | Haiku (or the local model on `:8080`) writes topic + fact rows beside the raw text |
+| Summariser | A hosted frontier model writes topic + fact rows beside the raw text (see below) |
 | `index.py search` | One ranked query, reciprocal rank fusion, recency bonus, health line first |
 | `AGENTS.md` rule | Tells the agent to search the index before answering (write `CLAUDE.md` with `--target claude`) |
 | Timer | Refreshes every 6 hours, silently, no window |
@@ -106,6 +106,30 @@ notes-index rule --variant trust-snippet               # shipped bundle: trust-s
 | `--target claude` | Writes the rule to `CLAUDE.md` instead of `AGENTS.md` |
 | `--no-summaries` | Skip the summary pass: fewer tokens spent indexing, weaker recall on long notes |
 | `--workers N` | Parallel summary calls (default 6) |
+
+## 🧠 Which model writes the summaries
+
+Providers are tried in order, and the first that answers wins:
+
+| # | Provider | Configured by |
+| :---: | :--- | :--- |
+| 1 | Any command you choose | `NOTES_INDEX_SUMMARIZER_CMD` — prompt on stdin, JSON on stdout |
+| 2 | `claude -p --model haiku` | used only if the `claude` CLI is installed |
+| 3 | **A hosted OpenAI-compatible endpoint** | `NOTES_INDEX_API_URL`, `NOTES_INDEX_MODEL`, `NOTES_INDEX_API_KEY`; defaults to NVIDIA NIM `z-ai/glm-5.3-flash` |
+| 4 | A local OpenAI-compatible endpoint | `NOTES_INDEX_LOCAL_URL` (default `http://127.0.0.1:8080/v1/chat/completions`), `NOTES_INDEX_LOCAL_MODEL` |
+
+Keys are read from the environment **and** from `~/.agent_keys.env`, because the 6-hour refresh runs from a systemd user unit that never loads a shell profile. A key exported only in `.bashrc` fails there silently.
+
+`NOTES_INDEX_MAX_TOKENS` defaults to **6000**, not 1600: the default model reasons before it answers, and at 1600 the whole budget went on thinking and the reply came back empty.
+
+`notes-index status` prints the resolved provider, so a failure names the thing that died:
+
+```
+summarizer    : z-ai/glm-5.3-flash @ https://integrate.api.nvidia.com/v1/chat/completions (2 keys)
+```
+
+To send summaries through your own agent instead: `NOTES_INDEX_SUMMARIZER_CMD='opencode run -m opencode-go/claude-haiku-5-5'`.
+
 
 ## ⚠️ What It Does Not Do
 

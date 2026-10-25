@@ -293,7 +293,8 @@ class TestNotesIndex(unittest.TestCase):
         self.index._providers = lambda: [
             (f"{self.index._api_model()} @ somewhere", self.index._call_api_model)
         ]
-        with mock.patch.object(
+        env, files = self._with_pool()
+        with env, files, mock.patch.object(
             notes_index_core.NotesIndex,
             "_post_chat",
             return_value=(None, 502, "HTTP 502 Bad Gateway"),

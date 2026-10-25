@@ -132,7 +132,7 @@ Failures are retried across the key pool: a 5xx, a timeout, or an empty reply mo
 summarizer    : z-ai/glm-5.3-flash @ https://integrate.api.nvidia.com/v1/chat/completions (2 keys)
 ```
 
-To send summaries through your own agent instead: `NOTES_INDEX_SUMMARIZER_CMD='opencode run -m opencode-go/claude-haiku-5-5'`.
+To send summaries through your own agent instead: `NOTES_INDEX_SUMMARIZER_CMD='opencode run -m opencode-go/deepseek-v4.1-flash'`.
 
 
 ## ⚠️ What It Does Not Do

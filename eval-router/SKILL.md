@@ -137,3 +137,4 @@ eval-router route "<request>"
 - Easy requests go to local zero-cost models; hard ones escalate.
 - If the shadow verification fails, the router falls back to a frontier model automatically.
 - Never route a task that needs a tool call through the free tier without verifying the output.
+- This decides **per request**. Where a test decides whether the work passed, the escalation belongs to [`../../orchestration/opencode-go/SKILL.md`](../../orchestration/opencode-go/SKILL.md) instead; stacking both on one request routes on prompt shape and then never runs the test.

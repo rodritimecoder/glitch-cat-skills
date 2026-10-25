@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import datetime
+import hashlib
 import json
 import math
 import re
@@ -39,14 +40,16 @@ class LocalEmbedder:
         except Exception:
             pass
 
-        # Pure-Python n-gram bag-of-words normalized embedding fallback
+        # Pure-Python bag-of-words normalized embedding fallback. The digest is
+        # blake2b rather than hash(): str hashing is salted per process, and a
+        # persisted cache written by one process has to stay comparable in the
+        # next one.
         words = re.findall(r"[a-z0-9]+", clean_text.lower())
         vec_dim = 128
         vec = [0.0] * vec_dim
         for w in words:
-            # Hash to dimension
-            h = hash(w) % vec_dim
-            vec[h] += 1.0
+            digest = hashlib.blake2b(w.encode("utf-8"), digest_size=8).digest()
+            vec[int.from_bytes(digest, "big") % vec_dim] += 1.0
 
         # L2 normalize
         norm = math.sqrt(sum(x * x for x in vec))

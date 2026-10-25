@@ -159,16 +159,21 @@ class TestNotesIndex(unittest.TestCase):
 
     def test_16_failed_summary_is_retried_next_run(self):
         self.write("long.md", "# Long\n\n" + ("z" * 9000))
-        original = self.index.summarize
 
         def broken(path, text):
             raise RuntimeError("summarizer exploded")
+
+        def working(path, text):
+            return {
+                "topics": [{"title": "Long", "question": "what is long?", "summary": "a long note"}],
+                "facts": [{"text": "the note is long"}],
+            }
 
         self.index.summarize = broken
         first = self.index.update(use_summarizer=True)
         self.assertEqual(first.summaries_made, 0)
         self.assertEqual(len(first.summary_errors), 1)
-        self.index.summarize = original
+        self.index.summarize = working
         processed = self.index.status()["files"]
         self.assertEqual(processed, 0)
         second = self.index.update(use_summarizer=True)

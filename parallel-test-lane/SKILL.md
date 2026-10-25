@@ -63,6 +63,22 @@ parallel-test-lane run --dir tests/ --out /tmp/test_report.json
 
 ---
 
+## Prove the test can fail
+
+```bash
+python3 scripts/mutate.py path/to/module.py --test "python3 -m unittest test_module" --json
+```
+
+The helper applies small mutations one at a time — flips a comparison operator,
+bumps an integer literal, turns `and` into `or`, deletes a `raise`/`return`
+line — and reruns the test command after each, restoring the file in a
+`finally` block. A **killed** mutant makes the test command exit non-zero. A
+**survivor** means the tests still passed, so nothing exercised the mutated
+behaviour: the suite is weaker than it looks. Zero survivors means the test
+can fail.
+
+---
+
 ## AGENTS.md rule
 
 ## Test lanes

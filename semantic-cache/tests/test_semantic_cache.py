@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import shutil
+import sqlite3
 import subprocess
 import tempfile
 import unittest
@@ -8,7 +9,7 @@ import sys
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.append(str(SCRIPTS))
-from cache_engine import SemanticCache, cosine_similarity
+from cache_engine import LocalEmbedder, SemanticCache, cosine_similarity
 
 
 class TestSemanticCache(unittest.TestCase):
@@ -19,6 +20,11 @@ class TestSemanticCache(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.td, ignore_errors=True)
+
+    def _use_offline_embedder(self):
+        """Force the deterministic 128d hash space so scores are reproducible."""
+        self.cache.embedder = LocalEmbedder(endpoint="http://127.0.0.1:1/v1/embeddings")
+        return self.cache.embedder
 
     def test_01_cache_hit_identical(self):
         q = "How do I configure git worktrees for parallel agents?"
@@ -88,6 +94,99 @@ class TestSemanticCache(unittest.TestCase):
         self.assertEqual(outs[0], outs[1], "the fallback vector changed between processes")
         self.assertEqual(len(outs[0].split(",")), 128)
         print("  ✓ fallback embedding is identical across processes")
+
+    # --- judge gate -------------------------------------------------------
+    #
+    # The collision the judge exists for: "Celsius to Fahrenheit" and
+    # "Fahrenheit to Celsius" are the same bag of words, so cosine cannot tell
+    # them apart. Similarity only nominates a candidate; the judge decides.
+
+    def test_06_judge_rejects_opposite_unit_conversion(self):
+        self._use_offline_embedder()
+        cached_q = "Celsius to Fahrenheit"
+        cached_a = "Multiply by 9/5 and add 32: 100 C = 212 F."
+        self.cache.set(cached_q, cached_a)
+
+        calls = []
+
+        def judge(query, cached_query, answer):
+            calls.append((query, cached_query, answer))
+            return False
+
+        res = self.cache.get("Fahrenheit to Celsius", threshold=0.90, judge=judge)
+
+        # The candidate cleared the threshold on similarity alone...
+        self.assertGreaterEqual(res["similarity"], 0.90)
+        # ...and the judge still turned it into a miss, naming the id it refused.
+        self.assertFalse(res["hit"])
+        self.assertEqual(res["reason"], "judge_rejected")
+        with sqlite3.connect(self.db_path) as conn:
+            row_ids = [r[0] for r in conn.execute("SELECT id FROM semantic_cache")]
+        self.assertIn(res["rejected_id"], row_ids)
+        self.assertEqual(res["matched_query"], cached_q)
+        self.assertNotIn("answer", res, "a rejected candidate must not be served")
+        self.assertEqual(calls, [("Fahrenheit to Celsius", cached_q, cached_a)])
+        # A refusal is not a hit: no counter moves, so a rejected row stays cold.
+        self.assertEqual(self.cache.stats()["total_cache_hits"], 0)
+        print("  ✓ judge rejected the C->F / F->C collision · verified")
+
+    def test_07_judge_accepts_true_rewording(self):
+        self._use_offline_embedder()
+        cached_q = "Celsius to Fahrenheit"
+        cached_a = "Multiply by 9/5 and add 32: 100 C = 212 F."
+        self.cache.set(cached_q, cached_a)
+
+        calls = []
+
+        def judge(query, cached_query, answer):
+            calls.append((query, cached_query, answer))
+            return True
+
+        q2 = "How do I convert Celsius to Fahrenheit?"
+        res = self.cache.get(q2, threshold=0.50, judge=judge)
+
+        self.assertTrue(res["hit"])
+        self.assertEqual(res["answer"], cached_a)
+        self.assertEqual(res["matched_query"], cached_q)
+        self.assertEqual(res["hit_count"], 1)
+        self.assertEqual(calls, [(q2, cached_q, cached_a)])
+        self.assertEqual(self.cache.stats()["total_cache_hits"], 1)
+        print("  ✓ judge accepted a genuine rewording · verified")
+
+    def test_08_judge_not_called_without_a_candidate(self):
+        self._use_offline_embedder()
+        self.cache.set("Celsius to Fahrenheit", "Multiply by 9/5 and add 32.")
+
+        calls = []
+
+        def judge(query, cached_query, answer):
+            calls.append((query, cached_query, answer))
+            return True
+
+        # No row clears the threshold at all.
+        res = self.cache.get("What is the capital city of Australia?", threshold=0.90, judge=judge)
+        self.assertFalse(res["hit"])
+        self.assertNotIn("reason", res)
+        self.assertNotIn("rejected_id", res)
+
+        # A row exists and scores above zero, but still sits below the threshold.
+        res_low = self.cache.get("Convert Kelvin to Rankine", threshold=0.95, judge=judge)
+        self.assertFalse(res_low["hit"])
+        self.assertGreater(res_low["best_similarity"], 0.0)
+        self.assertLess(res_low["best_similarity"], 0.95)
+        self.assertNotIn("reason", res_low)
+
+        self.assertEqual(calls, [], "the judge must not run when nothing clears the threshold")
+        print("  ✓ judge not called on clean miss · verified")
+
+    def test_09_get_stays_backwards_compatible(self):
+        self.cache.set("q", "a")
+        # Legacy two-argument positional form, no judge.
+        self.assertTrue(self.cache.get("q", 0.85)["hit"])
+        # Judge is the optional third positional argument.
+        self.assertTrue(self.cache.get("q", 0.85, lambda query, cached, answer: True)["hit"])
+        self.assertFalse(self.cache.get("q", 0.85, lambda query, cached, answer: False)["hit"])
+        print("  ✓ get() signature stays backwards compatible")
 
 
 if __name__ == "__main__":

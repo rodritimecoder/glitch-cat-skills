@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""Semantic cache engine: SQLite rows, local embeddings, and a judge gate.
+
+A cosine score is not a correctness measure, it only ranks candidates. The
+known failure is a direction flip -- "Fahrenheit to Celsius" and "Celsius to
+Fahrenheit" are the same bag of words, so they score about 0.998 against each
+other, higher than most honest rewordings of the same question. `SemanticCache.get`
+therefore treats the threshold as a candidate filter and lets an optional
+`judge` decide whether a candidate may actually be served.
+"""
 import datetime
 import hashlib
 import json
@@ -7,7 +16,7 @@ import re
 import sqlite3
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 class LocalEmbedder:
@@ -17,7 +26,10 @@ class LocalEmbedder:
     and EmbeddingGemma-2 (768d) -- and the offline fallback is a third, 128d
     hash space. Vectors from different spaces are not comparable, so every
     embedded row records which space it came from and `get` skips the rest
-    instead of silently scoring them 0.0.
+    instead of silently scoring them 0.0. Vectors from the *same* space are
+    comparable, but comparability stops at "these texts look alike": it never
+    says the cached answer answers this question, which is why `get` can be
+    given a judge.
     """
 
     def __init__(self, endpoint: str = "http://127.0.0.1:8087/v1/embeddings", timeout: float = 0.5):
@@ -99,7 +111,20 @@ class SemanticCache:
                     conn.execute(f"ALTER TABLE semantic_cache ADD COLUMN {col} {decl}")
             conn.commit()
 
-    def get(self, query: str, threshold: float = 0.85) -> Dict[str, Any]:
+    def get(self, query: str, threshold: float = 0.85,
+            judge: Optional[Callable[[str, str, str], bool]] = None) -> Dict[str, Any]:
+        """Look up `query`, optionally gating the candidate on a judge.
+
+        `threshold` only decides which rows are *candidates*: cosine similarity
+        orders text, it does not measure correctness. When a candidate clears
+        the threshold and `judge` is given, `judge(query, cached_query, answer)`
+        is asked and only a true verdict serves the answer. A false verdict is
+        a miss with `reason == "judge_rejected"` and the candidate's row id in
+        `rejected_id`; a judge that raises fails closed the same way, with the
+        exception text in `judge_error`. The judge is never consulted when no
+        candidate clears the threshold, and a rejected candidate accrues no
+        hit and does not move `last_accessed`.
+        """
         query_vec = self.embedder.embed(query)
         qdim = len(query_vec)
         best_hit = None
@@ -125,6 +150,29 @@ class SemanticCache:
 
             if best_hit and best_sim >= threshold:
                 row_id, cached_q, ans, hits = best_hit
+                if judge is not None:
+                    judge_error = None
+                    try:
+                        accepted = bool(judge(query, cached_q, ans))
+                    except Exception as exc:  # noqa: BLE001 - fail closed, not open
+                        accepted = False
+                        judge_error = f"{type(exc).__name__}: {exc}"
+                    if not accepted:
+                        rejected = {
+                            "hit": False,
+                            "query": query,
+                            "reason": "judge_rejected",
+                            "rejected_id": row_id,
+                            "matched_query": cached_q,
+                            "similarity": round(best_sim, 4),
+                            "best_similarity": round(best_sim, 4),
+                            "threshold": threshold,
+                            "embedding_source": self.embedder.last_source,
+                            "skipped_incompatible": incompatible,
+                        }
+                        if judge_error is not None:
+                            rejected["judge_error"] = judge_error
+                        return rejected
                 cursor.execute(
                     "UPDATE semantic_cache SET hit_count = hit_count + 1, last_accessed = ? WHERE id = ?",
                     (datetime.datetime.now(datetime.timezone.utc).isoformat(), row_id)

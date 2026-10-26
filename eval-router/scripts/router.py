@@ -185,10 +185,10 @@ def evaluate_response_quality(prompt: str, response: str) -> Tuple[bool, float, 
         res = JevEngine(port=8083, timeout=3.0).decide_bool(state, question)
         p_true = float(res.get("probabilities", {}).get("true", 0.5))
         passed = bool(res.get("decision", p_true >= 0.5))
-        return passed, round(p_true, 4), f"vllm-d3-mini P(true)={p_true:.3f}"
+        return passed, round(p_true, 4), f"h2o-lightning-4b P(true)={p_true:.3f}"
     except Exception as e:
         if len(response.strip()) > 20 and not ("error" in response.lower() and len(response) < 60):
-            return True, 0.85, f"Heuristic pass (vllm-d3-mini judge unavailable: {e})"
+            return True, 0.85, f"Heuristic pass (h2o-lightning-4b judge unavailable: {e})"
         return False, 0.30, f"Heuristic fail: suspicious short or error output"
 
 def estimate_cost_saved(tier: str, prompt_tokens: int, resp_tokens: int) -> float:

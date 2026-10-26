@@ -160,10 +160,10 @@ def classify(prompt: str, port: int = 8083, min_conf: float = 0.45) -> Dict[str,
             "tier": tier,
             "confidence": round(conf, 4),
             "probabilities": {k: round(float(v), 4) for k, v in probs.items()},
-            "source": res.get("source", "vllm_d3_mini_systemone"),
+            "source": res.get("source", "h2o_lightning_4b_systemone"),
             "reasoning": f"Calibrated Jev decision (confidence {conf:.2f})"
         }
     except Exception as e:
         res = _heuristic_classify(prompt)
-        res["reasoning"] += f" (vllm-d3-mini offline: {e})"
+        res["reasoning"] += f" (h2o-lightning-4b unavailable: {e})"
         return res

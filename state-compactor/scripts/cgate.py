@@ -17,7 +17,7 @@ import subprocess
 import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
-# `query` asks for prose, which the vllm-d3-mini decision model cannot emit --
+# `query` asks for prose, which the h2o-lightning-4b decision model cannot emit --
 # it returns calibrated probabilities, not text. Generative projection therefore
 # belongs to the local-llm skill on :8080 (Qwen3.6-35B Genesis).
 GENERATIVE_URL = "http://127.0.0.1:8080/v1/chat/completions"

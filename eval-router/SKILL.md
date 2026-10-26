@@ -4,11 +4,11 @@ name: eval-router
 description: >
   Self-calibrating request router with speculative shadow evaluation and failure harvesting
   (Glitch Cat Club; Reel DdWLJa2tjq6). Classifies prompt complexity (Easy/Moderate/Hard)
-  using local vllm-d3-mini (:8083) and pure-Python learned weights, dispatches to local zero-cost models
+  using local h2o-lightning-4b (:8083) and pure-Python learned weights, dispatches to local zero-cost models
   or free tiers, verifies output quality asynchronously or blocking with automated frontier fallback,
   and continuously harvests failures into training evaluations for 30-40% token cost reduction.
 
-compatibility: "Requires the local vllm-d3-mini endpoint on :8083. The optional hosted tiers need OPENROUTER_API_KEY and GEMINI_API_KEY."
+compatibility: "Requires the local h2o-lightning-4b endpoint on :8083 for model-backed classification and judging. The optional hosted tiers need OPENROUTER_API_KEY and GEMINI_API_KEY."
 allowed-tools: "Bash(eval-router:*) Bash(python3:*) Read Write"
 ---
 
@@ -21,7 +21,7 @@ allowed-tools: "Bash(eval-router:*) Bash(python3:*) Read Write"
                                │
                                ▼
         ┌──────────────────────────────────────────────┐
-        │   Hybrid Classifier (vllm-d3-mini :8083 / ML)   │
+         │   Hybrid Classifier (h2o-lightning-4b :8083 / ML)   │
         │   p(easy), p(moderate), p(hard) + Confidence │
         └──────┬──────────────────────┬──────────────┬─┘
                │                      │              │
@@ -104,7 +104,7 @@ Every request received through `/v1/chat/completions` is automatically classifie
 
 | Component | Target Port | Model / Engine | Role |
 | :--- | :--- | :--- | :--- |
-| **Classifier & Judge** | `:8083` | `vllm-d3-mini` via `jev-decision` | Calibrated P(true) quality judgement & 3-way triage |
+| **Classifier & Judge** | `:8083` | `h2o-lightning-4b` via `jev-decision` | Calibrated P(true) quality judgement & 3-way triage |
 | **Local Zero-Cost Tier** | `:8080` / `:4000` | Qwen3.6-35B Genesis / LiteLLM | Free local execution for Easy tier |
 | **Cloud Free Tier** | OpenRouter Free | Nemotron 3.5 Lightning / Nemotron Ultra | Zero-quota offload |
 | **Frontier Tier** | OpenRouter / Gemini | Claude 3.7 Sonnet / Gemini 2.5 Pro | High-complexity tasks and fallback swaps |

@@ -7,7 +7,7 @@ Synthesized directly from **Kem Glitch** (Glitch Cat Club; Reel `DemLMidtxxj` �
 ## 🏛️ Executive Philosophy: "Code Decides, Humans Govern Intent"
 
 Kem’s production engineering stack rests on four unbending rules:
-1. **Deterministic Skills + Calibrated Probabilistic Judgment:** A skill is a blend of instructions the LLM follows and deterministic executable code. Code decides wherever it can. Where judgment is mandatory, use the calibrated local decision model (`vllm-d3-mini` on `:8083`).
+1. **Deterministic Skills + Calibrated Probabilistic Judgment:** A skill is a blend of instructions the LLM follows and deterministic executable code. Code decides wherever it can. Where judgment is mandatory, use the calibrated local decision model (`h2o-lightning-4b` on `:8083`) through `jev-decision`.
 2. **Humans Retain the "Why and Why Not":** Models are brilliant builders, but they naturally drift away from business intent and constraints. The human approves the plan upfront and validates intent at the finish line.
 3. **Anti-Sycophancy via Holdouts:** Builders that see their own test suite optimize purely to cheat the tests. Holdout scenarios are withheld in an isolated folder until the build phase completes.
 4. **Validation Comes Before Code Review:** Test the product like a real human user first (clicking, typing, inspecting live screens). Check whether the code is neat and maintainable only after it is proven to work.

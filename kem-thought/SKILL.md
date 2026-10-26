@@ -121,4 +121,5 @@ quote wins.
 - The poison sits upstream: fix the source of the bad context, not the symptom.
 - Always run the control.
 - A skill is instructions the model may follow; a hook is code that ALWAYS runs.
+- A gate that cannot fail is not a gate; when a classifier is unsure, it routes to the human, not past it.
 - A judge that shares the author's context is not a judge.

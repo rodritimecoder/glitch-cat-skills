@@ -51,15 +51,51 @@ def test_expired_session():
     ...
 EOF
 
-# 4. Run grounded validation (runs tests + hidden holdouts; logs evidence on fail)
+# 4. Run grounded validation (runs your suite + every holdout; logs evidence per gate)
 kem-dev-loop validate user-auth-refactor --test "pytest tests/test_auth.py"
 
-# 5. Decoupled code review (runs ONLY after functional validation passes)
+# 5. Decoupled code review (refuses until phase 4 has actually passed)
 kem-dev-loop review --suite ponytail src/auth/
 kem-dev-loop review --suite unslop src/auth/
 
 # 6. Human evaluates alignment with original 'Why & Why Not' before git push
 ```
+
+### Routing fails closed
+
+`route` runs a deterministic pre-screen before it spends a model call. Any
+cross-cutting surface (`auth`, `session`, `jwt`, `migration`, `schema`, `api`,
+`payment`, `security`, `refactor`, `deploy`, …) forces `FULL_ROUTE` with no model
+consulted.
+
+Only genuinely ambiguous tasks reach the decision model, and a task is granted
+autonomy (`FAST_ROUTE`) only when the model picks *small* at **≥75 % confidence**
+from a live server. Everything else routes to the human gate:
+
+| Condition | Route | Reported as |
+| :--- | :--- | :--- |
+| Cross-cutting keyword hit | `FULL_ROUTE` | `deterministic` |
+| Model says *complex* | `FULL_ROUTE` | `jev` |
+| Model says *small* below 75 % | `FULL_ROUTE` | `jev` |
+| Decision server down (keyword fallback) | `FULL_ROUTE` | `degraded` ⚠️ |
+| `jev` not installed | `FULL_ROUTE` | `unavailable` ⚠️ |
+
+A dead server never reads as a calibrated decision. The output names its source
+and confidence, and `DEGRADED` says so out loud. The asymmetry is deliberate:
+a needless plan review costs minutes, a skipped one costs intent.
+
+### Gates that can actually fail
+
+- `validate` **executes** every file in `holdouts/` (`.py` via pytest, `.sh` via
+  bash, `.js` via node) and records stdout, stderr and exit code per gate.
+- No `--test` and no holdouts is a **refusal**, not a pass. There is nothing to fail.
+- A missing pytest is reported as an environment fault and does not burn a retry.
+- Two failed validations is the cap; a third needs `--force`, because adversarial
+  death loops are the thing this loop exists to avoid.
+- `review` refuses to run against a run whose `meta.json` has
+  `validation_passed: false`. Pass `--run <name>` when `.kem-loop/` holds more than
+  one run.
+
 
 ---
 

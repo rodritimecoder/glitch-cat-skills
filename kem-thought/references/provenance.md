@@ -3,7 +3,7 @@
 Every principle in `principles/` is a distillation of something Kem actually said. This file
 maps each one back to the reel, the timestamp, and the mined transcript it came from.
 
-Method: the 24 vault entries under `/run/media/rodri/AI/creator-vault/kem_glitch/` were
+Method: the 25 vault entries under `/run/media/rodri/AI/creator-vault/kem_glitch/` were
 mined (transcript + notes + visuals), and the recurring doctrine was extracted per talk,
 then merged across talks by frequency and by whether the point was load-bearing in his
 argument. A principle survived if it appeared as a rule he states, not as an example he
@@ -44,7 +44,7 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 
 ## Talks mined
 
-24 vault entries, all under `/run/media/rodri/AI/creator-vault/kem_glitch/`:
+25 vault entries, all under `/run/media/rodri/AI/creator-vault/kem_glitch/`:
 
 | Vault entry | Topic | Feeds |
 | :--- | :--- | :--- |

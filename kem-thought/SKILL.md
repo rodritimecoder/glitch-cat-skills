@@ -15,7 +15,7 @@ description: >
 Kem's Law: **a skill is instructions the model may follow; a hook is code that ALWAYS runs.**
 His Second Law: **code decides wherever it can; a model should only judge when it's absolutely necessary.**
 
-This suite is the thinking layer: 27 steering principles extracted from Kem Glitch's own
+This suite is the thinking layer: 28 steering principles extracted from Kem Glitch's own
 transcripts (all quotes and sources in `references/provenance.md`), plus the voice guide in
 `references/voice.md`. It is the Kem counterpart to Lauren Tan's `pstack` principles — same
 shape, different spine: Lauren steers by subtraction and taste, Kem steers by determinism

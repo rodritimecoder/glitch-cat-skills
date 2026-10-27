@@ -23,7 +23,7 @@ So: **pick one per group.** The groups below are mutually exclusive by design.
 | **Retrieval** | `notes-index`, `graph-memory`, `semantic-cache`, `state-compactor` | the question is "where is that thing I wrote" |
 | **Multi-agent** | `worktree-harness`, `projects-harness`, `glitch-orchestra`, `agentic-engineering` | the job is too big for one agent |
 | **Judgement** | `jev-decision`, `eval-router`, `eval-pipeline` | something must be scored, gated or routed |
-| **Verification** | `frontend-uat`, `parallel-test-lane` | the work has to be proven, not asserted |
+| **Verification** | `verification`, `frontend-uat`, `parallel-test-lane` | the work has to be proven, not asserted |
 | **Safety** | `guard-hooks` | always safe, never conflicts |
 | **Principles** | `kem-thought` | always safe, never conflicts |
 
@@ -190,6 +190,18 @@ swarm init --goal "<hit list>" --budget <dollars> --tokens <n>
 swarm check --est-cost <c> --est-tokens <n>
 - Every worker returns a scorecard with the schema, not a markdown summary.
 - The budget ceiling is enforced in code. If the check says no, stop — do not find another way.
+```
+
+### `verification` — hands and eyes
+
+```markdown
+## Verify, don't claim
+When an agent says a UI change is done, prove it:
+python3 scripts/verify.py run --pass .verify/pass.json
+- "Done" without a tool call is a claim. Open the app on the real viewport first.
+- Assert the text AND the request behind it: a healthy screen can hide a failed order.
+- A skipped layer is not a pass. Report which questions are still open.
+- Keep the check as a command, so the next agent replays it instead of re-improving it.
 ```
 
 ### `frontend-uat` — model-backed browser UAT

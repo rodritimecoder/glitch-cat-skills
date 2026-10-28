@@ -25,6 +25,7 @@ def main():
     p_comp = subparsers.add_parser("complete", help="Mark session completed")
     p_comp.add_argument("--id", required=True, help="Session ID")
     p_comp.add_argument("--summary", default="Finished", help="Completion summary")
+    p_comp.add_argument("--evidence", default=None, help="Artifact that proves the work (e.g. .verify/verify.json)")
 
     # alert
     p_alt = subparsers.add_parser("alert", help="Trigger completion alert chime")
@@ -41,8 +42,12 @@ def main():
         print(f"🎻 [Conductor] Registered session '{s['session_id']}' on {s['terminal_tag']}")
 
     elif args.command == "complete":
-        c = conductor.mark_session_complete(args.id, args.summary)
-        print(f"✓ [Conductor] Completed session '{c['session_id']}'")
+        c = conductor.mark_session_complete(args.id, args.summary, evidence=args.evidence)
+        if c.get("verified"):
+            print(f"✓ [Conductor] Completed session '{c['session_id']}' with evidence: {c['evidence']}")
+        else:
+            print(f"⚠️  [Conductor] Completed session '{c['session_id']}' UNVERIFIED — a summary is not evidence.")
+            print("    Pass --evidence <artifact> from a gate run before you call this done.")
 
     elif args.command == "alert":
         al = conductor.trigger_completion_alert(args.message)
@@ -55,7 +60,7 @@ def main():
         else:
             print(f"🎼 Glitch Orchestra Conductor Status:")
             print(f"  • Active Child Sessions ({st['active_count']}): {[s['session_id'] for s in st['active_sessions']]}")
-            print(f"  • Completed ({st['completed_count']}): {[s['session_id'] for s in st['completed_sessions']]}")
+            print(f"  • Completed ({st['completed_count']}), with evidence ({st['verified_count']}): {[s['session_id'] for s in st['completed_sessions']]}")
 
 
 if __name__ == "__main__":

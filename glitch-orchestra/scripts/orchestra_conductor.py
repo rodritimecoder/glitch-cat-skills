@@ -36,15 +36,21 @@ class OrchestraConductor:
         self._write_sessions(data)
         return session_entry
 
-    def mark_session_complete(self, session_id: str, summary: str = "Finished") -> Dict[str, Any]:
+    def mark_session_complete(self, session_id: str, summary: str = "Finished", evidence: str = None) -> Dict[str, Any]:
         data = self._read_sessions()
         matched = next((s for s in data["active_sessions"] if s["session_id"] == session_id), None)
         if not matched:
             raise ValueError(f"Session '{session_id}' not found in active sessions")
 
+        evidence_path = Path(evidence).expanduser().resolve() if evidence else None
+        if evidence_path and not evidence_path.is_file():
+            raise FileNotFoundError(f"Evidence '{evidence_path}' does not exist; a completion claim needs proof")
+
         data["active_sessions"].remove(matched)
         matched["status"] = "completed"
         matched["summary"] = summary
+        matched["evidence"] = str(evidence_path) if evidence_path else None
+        matched["verified"] = bool(evidence_path)
         matched["completed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         data["completed_sessions"].append(matched)
         self._write_sessions(data)
@@ -70,6 +76,7 @@ class OrchestraConductor:
         return {
             "active_count": len(data["active_sessions"]),
             "completed_count": len(data["completed_sessions"]),
+            "verified_count": sum(1 for s in data["completed_sessions"] if s.get("verified")),
             "active_sessions": data["active_sessions"],
             "completed_sessions": data["completed_sessions"],
         }

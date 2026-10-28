@@ -111,9 +111,9 @@ $CLI log search "JWT"
 
 ---
 
-## 🧪 Grounded Verification Suite
+## 🧪 Self-test Suite
 
-Run Kem's 7-stage test suite:
+Run the harness's own test suite:
 ```bash
 python3 /run/media/rodri/AI/skills/projects-harness/tests/test_projects_harness.py
 ```

@@ -36,16 +36,18 @@ $ORCHESTRA register --id worker_01 --task "Refactor authentication middleware" -
 # 2. Check live conductor status
 $ORCHESTRA status
 
-# 3. Mark session complete
-$ORCHESTRA complete --id worker_01 --summary "Auth middleware refactored and verified"
+# 3. Mark session complete with the artifact that proves it
+$ORCHESTRA complete --id worker_01 \
+  --summary "Auth middleware refactored" \
+  --evidence .verify/verify.json
 
 # 4. Trigger completion alert
 $ORCHESTRA alert --message "All 4 worker tasks successfully completed!"
 ```
 
----
-
----
+A completion without `--evidence` is recorded as `verified: false` and reported
+as `UNVERIFIED`. A path that does not exist is refused. The conductor relays
+the proof; it does not invent it.
 
 ---
 
@@ -54,6 +56,6 @@ $ORCHESTRA alert --message "All 4 worker tasks successfully completed!"
 ## Conducting
 Lead as a conductor, not as a worker:
 glitch-orchestra register --id <worker> --task "<task>" --term <tty>
-glitch-orchestra complete --id <worker> --summary "<verified summary>"
+glitch-orchestra complete --id <worker> --summary "<what changed>" --evidence <artifact>
 - Dispatch to a dedicated session; do not hold the work in the lead's context.
-- A worker is complete when it says so and its summary is verifiable.
+- A summary is a claim, not evidence. Completion carries the artifact a gate produced.

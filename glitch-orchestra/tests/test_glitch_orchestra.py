@@ -25,19 +25,40 @@ class TestGlitchOrchestra(unittest.TestCase):
         st1 = self.conductor.status()
         self.assertEqual(st1["active_count"], 1)
 
-        c = self.conductor.mark_session_complete("subagent_01", "Models refactored cleanly")
+        evidence = Path(self.td) / "lifecycle.json"
+        evidence.write_text('{"status": "ok"}', encoding="utf-8")
+        c = self.conductor.mark_session_complete("subagent_01", "Models refactored cleanly", evidence=str(evidence))
         self.assertEqual(c["status"], "completed")
+        self.assertTrue(c["verified"])
 
         st2 = self.conductor.status()
         self.assertEqual(st2["active_count"], 0)
         self.assertEqual(st2["completed_count"], 1)
-        print("  ✓ session lifecycle · verified")
+        self.assertEqual(st2["verified_count"], 1)
+        print("  ✓ session lifecycle · completed with evidence")
 
     def test_02_completion_alert(self):
         res = self.conductor.trigger_completion_alert("Run complete")
         self.assertEqual(res["alert_message"], "Run complete")
         self.assertTrue(res["bell_emitted"])
-        print("  ✓ completion alert · verified")
+        print("  ✓ completion alert · bell emitted")
+
+    def test_03_evidence_gate(self):
+        self.conductor.register_child_session("subagent_02", "Ship checkout", "tty_02")
+        evidence = Path(self.td) / "verify.json"
+        evidence.write_text('{"verdict": "pass"}', encoding="utf-8")
+        c = self.conductor.mark_session_complete("subagent_02", "Checkout shipped", evidence=str(evidence))
+        self.assertTrue(c["verified"])
+        self.assertEqual(c["evidence"], str(evidence.resolve()))
+        self.assertEqual(self.conductor.status()["verified_count"], 1)
+
+        self.conductor.register_child_session("subagent_03", "Claim without proof", "tty_03")
+        with self.assertRaises(FileNotFoundError):
+            self.conductor.mark_session_complete("subagent_03", "Trust me", evidence=str(Path(self.td) / "missing.json"))
+
+        u = self.conductor.mark_session_complete("subagent_03", "Trust me")
+        self.assertFalse(u["verified"])
+        print("  ✓ evidence gate · missing artifact refused, unverified completion labelled")
 
 
 if __name__ == "__main__":

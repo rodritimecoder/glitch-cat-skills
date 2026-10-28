@@ -30,7 +30,7 @@ allowed-tools: "Bash(kem-dev-loop:*) Bash(jev:*) Bash(review-hub:*) Bash(git:*) 
 │  6. PRODUCTION   │ <── │  5. CODE REVIEW  │ <── │  4. GROUNDED     │
 │     & INTENT     │     │     (Decoupled)  │     │     VALIDATE     │
 └──────────────────┘     └──────────────────┘     └──────────────────┘
-     human gate              review-hub               frontend-uat / CDP
+     human gate              review-hub               verification / CDP
 ```
 
 ---
@@ -53,6 +53,10 @@ EOF
 
 # 4. Run grounded validation (runs your suite + every holdout; logs evidence per gate)
 kem-dev-loop validate user-auth-refactor --test "pytest tests/test_auth.py"
+
+# 4b. UI work: prove the app with hands and eyes, not a screenshot claim
+verify-app doctor --json
+verify-app run --pass .verify/pass.json
 
 # 5. Decoupled code review (refuses until phase 4 has actually passed)
 kem-dev-loop review --suite ponytail src/auth/
@@ -104,7 +108,7 @@ a needless plan review costs minutes, a skipped one costs intent.
 1. **Anti-Sycophancy via Holdouts:**
    When coding agents inspect their own test assertions during authoring, they exhibit sycophancy—hardcoding dummy mocks and fragile heuristics to pass the test. Holdout scenarios are isolated in `.kem-loop/<run>/holdouts/` and executed strictly at validation time.
 2. **Validation First, Code Review Second:**
-   Never mix code review into functional testing. Prove that software works for a real human persona first (clicking, typing, inspecting live screens). Once proven functional, run `review-hub` for type discipline and clean architecture.
+   Never mix code review into functional testing. Prove that software works for a real human persona first by driving the live app (`verify-app run` from the `verification` skill: real viewport, console, network, latency and pixels). `frontend-uat` is the sub-second click loop; `verification` is the durable PASS/FAIL artifact. Once proven functional, run `review-hub` for type discipline and clean architecture.
 3. **No Adversarial Death Loops:**
    Infinite critic-writer loops burn context and money. Every validation rejection must carry hard serialized failure evidence (screenshots, stdout/stderr, traces) back to the builder with strict retry caps (max 2 iterations).
 4. **Human Retains the "Why and Why Not":**

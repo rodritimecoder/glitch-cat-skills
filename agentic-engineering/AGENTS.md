@@ -18,7 +18,8 @@ Autonomous production pipeline implementing Kem's (Glitch Cat Club) 7-step loop.
 | Run event listener | `agentic listen [--once]` |
 | Run unbiased judge evaluation | `agentic judge <card-id> [--model flash]` |
 | Split task into parallel lanes | `agentic split <title>` |
-| Run full 7-step loop | `agentic run <card-id>` |
+| Run full 7-step loop | `agentic run <card-id> --test "<cmd>" [--lint "<cmd>"] [--evidence <artifact>]` |
+| Prove the UI before evidence | `verify-app run --pass .verify/pass.json` (`verification` skill) |
 | Run test suite | `python3 scripts/test_agentic.py` |
 
 ## Not This Workspace
@@ -27,6 +28,8 @@ Autonomous production pipeline implementing Kem's (Glitch Cat Club) 7-step loop.
 - Code review rubrics: Handled in `review-hub`.
 
 ## Status Rules
-- `COMPLETE`: Card is in `04_done/` with all criteria checked and Judge stamp.
-- `REJECTED`: Judge fired pink arrow; card returned to `02_picked_up/` with delta.
+- `REVIEW`: Gates passed and the judge approved; the card is in `03_review/` waiting for the human.
+- `COMPLETE`: The human moved the card to `04_done/`. A card is never completed by the pipeline alone.
+- `REJECTED`: A gate failed or the judge fired the pink arrow; card returned to `02_picked_up/` with delta.
+- `UNVERIFIED`: A mock judge or `--dry-run` was used; never counts as a verdict.
 - `STALE`: Upstream task brief was modified after card was created.

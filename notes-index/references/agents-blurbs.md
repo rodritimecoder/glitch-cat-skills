@@ -164,9 +164,9 @@ projects-harness route "<question or task>"
 ## Conducting
 Lead as a conductor, not as a worker:
 glitch-orchestra register --id <worker> --task "<task>" --term <tty>
-glitch-orchestra complete --id <worker> --summary "<verified summary>"
+glitch-orchestra complete --id <worker> --summary "<what changed>" --evidence <artifact>
 - Dispatch to a dedicated session; do not hold the work in the lead's context.
-- A worker is complete when it says so and its summary is verifiable.
+- A summary is a claim, not evidence. Completion carries the artifact a gate produced.
 ```
 
 ### `agentic-engineering` — the 7-step factory
@@ -177,8 +177,9 @@ Work moves through the board, not through chat:
 agentic kanban add "<task>" --req "<requirement>"
 agentic kanban move <card-id> done
 - One card, one verifiable requirement. No card without a done condition.
+- Gates run as commands (`--lint`, `--test`, `--evidence`); a skipped gate is reported, never passed.
 - A fresh-context judge decides whether the work is done; the author does not grade itself.
-- Never merge a card whose gate has not run.
+- `agentic run` stops in review. The human moves the card to done.
 ```
 
 ### `swarm-contract` — goals, scorecards, budget ceiling
@@ -197,7 +198,7 @@ swarm check --est-cost <c> --est-tokens <n>
 ```markdown
 ## Verify, don't claim
 When an agent says a UI change is done, prove it:
-python3 scripts/verify.py run --pass .verify/pass.json
+verify-app run --pass .verify/pass.json
 - "Done" without a tool call is a claim. Open the app on the real viewport first.
 - Assert the text AND the request behind it: a healthy screen can hide a failed order.
 - A skipped layer is not a pass. Report which questions are still open.

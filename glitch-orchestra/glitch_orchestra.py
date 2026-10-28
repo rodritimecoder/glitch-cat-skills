@@ -42,7 +42,11 @@ def main():
         print(f"🎻 [Conductor] Registered session '{s['session_id']}' on {s['terminal_tag']}")
 
     elif args.command == "complete":
-        c = conductor.mark_session_complete(args.id, args.summary, evidence=args.evidence)
+        try:
+            c = conductor.mark_session_complete(args.id, args.summary, evidence=args.evidence)
+        except (ValueError, FileNotFoundError) as exc:
+            print(f"❌ [Conductor] {exc}")
+            sys.exit(1)
         if c.get("verified"):
             print(f"✓ [Conductor] Completed session '{c['session_id']}' with evidence: {c['evidence']}")
         else:

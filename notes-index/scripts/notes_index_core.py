@@ -778,6 +778,7 @@ class NotesIndex:
 RULE_BASE_BULLETS = [
     "- Use the words the note itself would use. If nothing fits, search once more with different words.",
     "- Results are pointers. Open the file before you state a fact from it.",
+    "- When you answer from these notes, name the file it came from. Prove it: python {script} cite <answer.md>",
     "- If the first line shows an error, or says the index is more than a day old, run: python {script} update",
 ]
 

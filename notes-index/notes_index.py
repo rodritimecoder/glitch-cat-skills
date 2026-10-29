@@ -27,6 +27,7 @@ from notes_index_core import (  # noqa: E402
     timer_status,
     uninstall_timer,
 )
+from cite_check import check as check_citations, render as render_citations  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -81,12 +82,43 @@ def build_parser() -> argparse.ArgumentParser:
     p_timer.add_argument("action", choices=["install", "status", "uninstall"])
     p_timer.add_argument("--every-hours", type=int, default=6)
 
+    p_cite = sub.add_parser("cite", parents=[common], help="Prove an answer's citations: paths resolve, lines exist, quotes are verbatim")
+    p_cite.add_argument("file", help="Markdown answer to check")
+    p_cite.add_argument("--root", default=None, help="Base folder for relative citations (default: the answer's folder)")
+    p_cite.add_argument("--transcript", default=None, help="Transcript for [MM:SS] citations (default: transcript.md beside the answer)")
+    p_cite.add_argument("--strict-lines", action="store_true", help="Require a quote to sit inside the cited line range")
+    p_cite.add_argument("--coverage-chars", type=int, default=80, help="Flag uncited prose blocks at or above this length (default: 80)")
+    p_cite.add_argument("--fail-on-warn", action="store_true", help="Treat uncited paragraphs as failures")
+
     return parser
 
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     folder = Path(args.folder).expanduser().resolve()
+
+    if args.command == "cite":
+        try:
+            report = check_citations(
+                Path(args.file),
+                root=Path(args.root) if args.root else None,
+                transcript=Path(args.transcript) if args.transcript else None,
+                strict_lines=args.strict_lines,
+                coverage_chars=args.coverage_chars,
+            )
+        except FileNotFoundError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        if args.json:
+            print(json.dumps(report, indent=2))
+        else:
+            print(render_citations(report))
+        if not report["pass"]:
+            return 1
+        if args.fail_on_warn and report["warnings"]:
+            return 1
+        return 0
+
     index = NotesIndex(folder, db_path=Path(args.db) if args.db else None, chunk=args.chunk, workers=args.workers)
     script = Path(__file__).resolve()
 

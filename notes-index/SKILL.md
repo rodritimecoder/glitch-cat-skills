@@ -5,7 +5,9 @@ description: >
   Local ranked search over a Markdown notes folder — one SQLite FTS5 index, fingerprint-based refresh, Haiku-class
   summaries, and an AGENTS.md rule so the agent searches the index instead of grepping (Glitch Cat Club / Kem Glitch;
   Reel DezGALzNCuf, artifact MdwChkFxkCKwwnToGVJXGX). Cuts memory-search token spend by up to half on a large notes
-  vault. Use when answering questions about past work, decisions or notes, or when a folder of Markdown keeps growing.
+  vault. Also a `cite` gate that proves an answer's citations before it ships: paths resolve, `:lines` exist, and
+  every quoted span is verbatim in the cited file or transcript. Use when answering questions about past work,
+  decisions or notes, when a folder of Markdown keeps growing, or when a claim needs to be traced back to its source.
 
 compatibility: "Python 3.10+ with sqlite3 FTS5. Summaries use a hosted model over plain HTTPS; a local OpenAI-compatible endpoint is an optional fallback."
 allowed-tools: "Bash(python3:*) Bash(notes-index:*) Read Write Edit"
@@ -82,6 +84,43 @@ Results are **pointers**. Open the file before stating a fact from it.
 | `status` | Files, rows by kind, freshness, last error, last log line |
 | `rule` | Print the `AGENTS.md` block, or `--apply` it; `--variant full\|lean\|trust-snippet`, `--target agents\|claude` |
 | `timer` | `install` / `status` / `uninstall` the 6-hour refresh |
+| `cite` | Prove an answer's citations: paths resolve, `:lines` exist, quotes are verbatim. `--strict-lines`, `--transcript`, `--fail-on-warn` |
+
+## 🔗 `cite` — prove the answer's citations
+
+Search finds the note; `cite` proves the answer used it. It reads a Markdown answer and checks
+every citation in it:
+
+- **`path` or `path:line`** — the file resolves (relative to the answer, then `--root`) and the
+  line exists. A path with an explicit line that does not resolve is a violation; a bare
+  reference like `karpathy/llm-wiki.md` is a warning, because not every name is a local file.
+- **`[MM:SS]`** — resolved against `transcript.md` beside the answer (or `--transcript`), and
+  matched against the surrounding transcript blocks, so a coarse ASR block does not produce a
+  false failure.
+- **Quotes** — every `"…"` in a paragraph that carries a citation must appear in the cited
+  text. `[editorial insertions]` and `…` elisions are tolerated; paraphrase is not. Punctuation
+  and case are ignored, words are not.
+
+```bash
+# Did the answer actually quote what it cited?
+notes-index --folder /run/media/rodri/AI/creator-vault cite path/to/answer.md
+
+# Require the quote to sit inside the cited line range
+notes-index cite answer.md --strict-lines
+
+# Fail on uncited prose too, not just on false citations
+notes-index cite answer.md --fail-on-warn
+```
+
+Exit `1` when a citation is false. Uncited paragraphs are warnings by default: a synthesis
+paragraph legitimately has no single source, and the gate should not pretend otherwise.
+
+**What it cannot do:** a quote can be real and still not support the claim. That is a judge's
+job with fresh context (`kem-thought` → `fresh-context-judges`), not a substring's. This gate
+proves the citation exists; it does not prove the argument.
+
+The measured case for it: plain Claude Code verified 70% of its answers on a 200-file test;
+with one cite-your-source instruction, 92.5% (Glitch Cat Club, `DfFSZDvN6oV`).
 
 ## ⚖️ The Levers (change one at a time, compare)
 

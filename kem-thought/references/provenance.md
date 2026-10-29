@@ -3,7 +3,7 @@
 Every principle in `principles/` is a distillation of something Kem actually said. This file
 maps each one back to the reel, the timestamp, and the mined transcript it came from.
 
-Method: the 26 vault entries under `/run/media/rodri/AI/creator-vault/kem_glitch/` were
+Method: the 27 vault entries under `/run/media/rodri/AI/creator-vault/kem_glitch/` were
 mined (transcript + notes + visuals), and the recurring doctrine was extracted per talk,
 then merged across talks by frequency and by whether the point was load-bearing in his
 argument. A principle survived if it appeared as a rule he states, not as an example he
@@ -42,10 +42,11 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 | `foundations-over-shiny-objects` | Memory in AI Context & Retrieval | `DcI_-FStEqz` | 04:04 | `2026-10-16_memory_in_ai_context_and_retrieval_architecture` |
 | `start-low-step-up` | Which Effort? Which Model? Routing via Tests | `De4PXaltWfP` | 00:48 | `2026-10-25_which_effort_which_model_routing` |
 | `give-it-hands-and-eyes` | Verification: Hands and Eyes | `DfAIPrAtteM` | 00:49 | `2026-10-28_verification_hands_and_eyes` |
+| `cite-what-you-claim` | LLM Wikis vs Plain Claude Code | `DfFSZDvN6oV` | 01:59 | `2026-10-30_karpathy_llm_wikis` |
 
 ## Talks mined
 
-26 vault entries, all under `/run/media/rodri/AI/creator-vault/kem_glitch/`:
+27 vault entries, all under `/run/media/rodri/AI/creator-vault/kem_glitch/`:
 
 | Vault entry | Topic | Feeds |
 | :--- | :--- | :--- |
@@ -75,6 +76,7 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 | `2026-10-21_standard_technical_english` | Rules as hooks, self-correction | `rules-in-code-not-context` |
 | `2026-10-25_which_effort_which_model_routing` | Task definition, SWE-bench testing, effort costs, optimistic escalation | `start-low-step-up`, `code-decides` |
 | `2026-10-28_verification_hands_and_eyes` | The trust ladder, hands and eyes, Playwright/DevTools/image diff/Storybook/Sentry, the five questions and the CLI | `give-it-hands-and-eyes` |
+| `2026-10-30_karpathy_llm_wikis` | LLM wikis benchmarked, ICM at baseline cost, the cite-your-source hook (70% → 92.5%) | `cite-what-you-claim`, `measure-then-claim`, `foundations-over-shiny-objects` |
 
 ## Known gaps
 

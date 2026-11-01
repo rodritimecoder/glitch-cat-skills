@@ -2,11 +2,12 @@
 name: state-compactor
 
 description: >
-  Autonomous state-file compaction harness and context-rot shield for long agent loops,
-  subagent handoffs, and gated code retrieval (Glitch Cat Club; Reels DdyqnietB8C & DdME5hsNRju).
-  Combines active structured state ledgers (.agent_state.json and STATE.md) with cgate
-  (context-gated AST reader & local-LLM query projection), preserving 100% of facts across
-  660,000+ token sessions without context poisoning.
+  Zero-loss state protocol for long agent sessions: continuous writes to .agent_state.json and
+  STATE.md while the context is still sharp, so a fresh window can be rehydrated with 100%
+  fact parity, plus cgate for context-gated reading of large files through a local LLM. Use
+  when a long session is getting confused or drifting, to keep the facts straight across a
+  compaction, to hand state to a subagent, or to slice a huge file instead of reading it
+  whole. It preserves facts rather than summarising them away.
 
 compatibility: "Requires the local Qwen3.6-35B Genesis LLM on :8080 for `cgate query` projection (see the `local-llm` skill). `cgate view` and `cgate grep` need no server."
 allowed-tools: "Bash(state-compactor:*) Bash(python3:*) Read Write"

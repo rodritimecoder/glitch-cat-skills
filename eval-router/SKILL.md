@@ -2,11 +2,14 @@
 name: eval-router
 
 description: >
-  Self-calibrating request router with speculative shadow evaluation and failure harvesting
-  (Glitch Cat Club; Reel DdWLJa2tjq6). Classifies prompt complexity (Easy/Moderate/Hard)
-  using local h2o-lightning-4b (:8083) and pure-Python learned weights, dispatches to local zero-cost models
-  or free tiers, verifies output quality asynchronously or blocking with automated frontier fallback,
-  and continuously harvests failures into training evaluations for 30-40% token cost reduction.
+  Self-calibrating request router with speculative shadow evaluation and failure harvesting.
+  Classifies prompt complexity (Easy/Moderate/Hard) using local h2o-lightning-4b and
+  pure-Python learned weights, dispatches to local zero-cost models or free tiers, verifies output
+  quality asynchronously or blocking with automated frontier fallback, and harvests failures
+  into training evaluations for 30-40% token cost reduction. Use to pick the cheap model
+  unless the question is hard, to route a prompt to the right model by difficulty, or to cut
+  token spend without losing quality. Routes one request; to ask several models the same
+  question at once, use free-swarm.
 
 compatibility: "Requires the local h2o-lightning-4b endpoint on :8083 for model-backed classification and judging. The optional hosted tiers need OPENROUTER_API_KEY and GEMINI_API_KEY."
 allowed-tools: "Bash(eval-router:*) Bash(python3:*) Read Write"

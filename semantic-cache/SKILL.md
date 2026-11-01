@@ -2,9 +2,13 @@
 name: semantic-cache
 
 description: >
-  Sub-10ms repeat query bypass and verified response cache for RAG and agent systems (Glitch Cat Club / Kem Glitch;
-  Reel DdbQeb5t2u0). Intercepts recurring queries via dense vector cosine similarity before invoking heavy RAG pipelines
-  or frontier LLMs, delivering instant answers at $0 token cost for 40-70% of inbound queries.
+  Sub-10ms repeat query bypass and verified response cache for RAG and agent systems.
+  Intercepts recurring queries via dense vector cosine similarity before invoking heavy RAG
+  pipelines or frontier LLMs, delivering instant answers at zero token cost for 40-70% of
+  inbound queries. Use when the same question keeps coming back, to avoid paying twice for an
+  answer already given, to memoise or deduplicate repeated lookups, or to cut prompt cost
+  across near-identical requests. It caches answers to questions; it does not index or search
+  a notes folder — use notes-index for that.
 
 compatibility: "Requires the local embedding endpoint on :8087 for the semantic leg."
 allowed-tools: "Bash(python3:*) Read Write"

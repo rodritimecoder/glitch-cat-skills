@@ -10,6 +10,8 @@ compatibility: "Requires the local embedding endpoint on :8087 for the hybrid BM
 allowed-tools: "Bash(graph-memory:*) Bash(python3:*) Read Write"
 ---
 
+> **Model layer:** the server behind this skill is registered in the `model-layer` skill (slot `:8086 + :8087`) — launcher, weights files, health and quirks. Read it before starting, swapping or debugging the model.
+
 # `graph-memory` — Unified Knowledge Graph & Hybrid RAG (Glitch Cat Club Architecture)
 
 A dual-legged local memory system derived directly from **Kem Glitch (Glitch Cat Club)**'s `graph-memory-starter`. Solves the fundamental flaw of autonomous agent memory: **eliminates upstream ontological drift and duplicate entity pollution while delivering sub-2ms deterministic graph traversals**.

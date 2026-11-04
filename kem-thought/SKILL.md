@@ -1,13 +1,13 @@
 ---
 name: kem-thought
 description: >
-  Kem Glitch's thought skills: 30 steering principles distilled from the
+  Kem Glitch's thought skills: 31 steering principles distilled from the
   Glitch Cat Club transcripts, plus the /kem-mode front door. Use when
   building or operating agent systems, harnesses, swarms, memory/retrieval
   layers, evaluation pipelines, or when the operator says "use kem mode",
   "what would kem do", "kem principles", or names a principle
   (e.g. "code decides wherever it can", "the poison sits upstream",
-  "always run the control").
+  "always run the control", "mutate the test").
 ---
 
 # Kem Thought (`kem-thought`)
@@ -15,7 +15,7 @@ description: >
 Kem's Law: **a skill is instructions the model may follow; a hook is code that ALWAYS runs.**
 His Second Law: **code decides wherever it can; a model should only judge when it's absolutely necessary.**
 
-This suite is the thinking layer: 30 steering principles extracted from Kem Glitch's own
+This suite is the thinking layer: 31 steering principles extracted from Kem Glitch's own
 transcripts (all quotes and sources in `references/provenance.md`), plus the voice guide in
 `references/voice.md`. It is the Kem counterpart to Lauren Tan's `pstack` principles — same
 shape, different spine: Lauren steers by subtraction and taste, Kem steers by determinism
@@ -36,7 +36,9 @@ Run these five moves before touching anything:
 3. **Decide what good looks like.** Write the test jobs before the build, awkward ones
    included. `principles/decide-what-good-looks-like-first.md`
 4. **Fix the harness first.** Routes, roots, gates and the stop condition are code, written
-   before the first agent runs. `principles/fix-the-harness-first.md`
+   before the first agent runs. `principles/fix-the-harness-first.md`. Check `harnesses/`
+   (`t3-code.md`, `gemini-antigravity.md`, `opencode.md`, `claude-code.md`, `pi-boxxy.md`)
+   to hook into your host runtime without friction.
 5. **State the done-check.** What proves this works, what artifact proves it, and what the
    control is. `principles/always-run-the-control.md`, `principles/measure-then-claim.md`
 
@@ -50,7 +52,7 @@ The operator can steer by principle name mid-session. Load that file and obey it
 
 Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-sits-upstream.md`.
 
-### The 30 principles
+### The 31 principles
 
 **The law** — `code-decides` · `move-jobs-to-code` · `these-are-just-software`
 
@@ -66,7 +68,7 @@ Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-
 `context-poisoning` · `the-poison-sits-upstream` · `model-the-domain`
 
 **Evidence** — `decide-what-good-looks-like-first` · `give-it-hands-and-eyes` ·
-`always-run-the-control` · `hold-out-the-tests` · `measure-then-claim` · `cite-what-you-claim`
+`always-run-the-control` · `hold-out-the-tests` · `mutate-the-test` · `measure-then-claim` · `cite-what-you-claim`
 
 **Craft & coordination** — `label-provenance` · `foundations-over-shiny-objects`
 
@@ -95,6 +97,16 @@ deterministic alternative:
 - A summary is not a handoff.
 - A claim without a control run is a story, not a measurement.
 - Rules that live only in context decay. Move them into code.
+
+### Harness adapters (`harnesses/`)
+
+Before executing multi-agent pipelines, workflow graphs, or gates, read the adapter for your active host harness:
+
+- **T3 Code** (`harnesses/t3-code.md`): ACP delegate orchestration, `isolation: "worktree"`, preview tools, reactive wakeups, HTML visuals (`html_preview` + `html_render`).
+- **Gemini / Antigravity CLI** (`harnesses/gemini-antigravity.md`): Native Python `run_workflow` graphs, dynamic subagents (`define_subagent`), `Workspace: "branch"`, surgical diffs (`replace_file_content`).
+- **OpenCode** (`harnesses/opencode.md`): Local daemons (`:8080`, `:8083`), compound bash batching, git worktrees (`worktree-harness`), disk JSON ledgers (`step_NN.json`).
+- **Claude Code** (`harnesses/claude-code.md`): `.claude/hooks/` pre-execution guards, `CLAUDE.md` 200-line budget, `Agent` subagents.
+- **Pi Agent & Boxxy Claw** (`harnesses/pi-boxxy.md`): Hot-reloaded skills, direct CLI tooling, local GPU ports.
 
 ### Voice
 

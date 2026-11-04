@@ -43,6 +43,7 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 | `start-low-step-up` | Which Effort? Which Model? Routing via Tests | `De4PXaltWfP` | 00:48 | `2026-10-25_which_effort_which_model_routing` |
 | `give-it-hands-and-eyes` | Verification: Hands and Eyes | `DfAIPrAtteM` | 00:49 | `2026-10-28_verification_hands_and_eyes` |
 | `cite-what-you-claim` | LLM Wikis vs Plain Claude Code | `DfFSZDvN6oV` | 01:59 | `2026-10-30_karpathy_llm_wikis` |
+| `mutate-the-test` | Do You Even Mutate Tests Bro? | `DfSJyHpNyBe` | 01:55 | `2026-11-03_mutation_testing_for_ai_code` |
 
 ## Talks mined
 

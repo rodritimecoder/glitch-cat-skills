@@ -1,13 +1,11 @@
 ---
 name: kem-thought
 description: >
-  Kem Glitch's thought skills: 32 steering principles distilled from the
-  Glitch Cat Club transcripts, plus the /kem-mode front door. Use when
-  building or operating agent systems, harnesses, swarms, memory/retrieval
-  layers, evaluation pipelines, or when the operator says "use kem mode",
-  "what would kem do", "kem principles", or names a principle
-  (e.g. "code decides wherever it can", "the poison sits upstream",
-  "always run the control", "mutate the test", "fix the measuring not the results").
+  Kem's 32 steering principles and the /kem-mode contract, distilled from the
+  Glitch Cat Club transcripts. Load when the operator says "use kem mode",
+  "what would kem do", or names a principle; or when a task turns on a gate,
+  a control run, deterministic step ownership, or a claim that needs
+  measurement before it ships.
 ---
 
 # Kem Thought (`kem-thought`)
@@ -78,15 +76,22 @@ Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-
 | Task shape | Load first | Then |
 | :--- | :--- | :--- |
 | New agent feature / skill | `fix-the-harness-first`, `tag-every-step` | `a-gate-is-code-that-can-fail`, `decide-what-good-looks-like-first` |
+| Routing, dispatch, or skill selection | `write-the-route-in-code`, `rules-in-code-not-context` | `a-gate-is-code-that-can-fail`, `these-are-just-software` |
+| Agent framework or model API treated as special | `these-are-just-software`, `code-decides` | `move-jobs-to-code`, `fix-the-harness-first` |
+| Choosing tools, models, libraries, or dependencies | `foundations-over-shiny-objects` | `model-the-domain`, `start-low-step-up` |
 | Bug that keeps coming back | `the-poison-sits-upstream`, `never-let-a-model-overrule-code` | `measure-then-claim` |
 | Parallel / multi-agent work | `isolate-before-you-parallelise`, `start-with-a-workflow` | `narrow-lens-owned-files`, `contain-the-swarm` |
 | Review or judge of someone else's work | `fresh-context-judges`, `check-the-judge-too` | `hold-out-the-tests` |
+| A test or gate that has never failed | `mutate-the-test`, `a-gate-is-code-that-can-fail` | `always-run-the-control`, `hold-out-the-tests` |
 | Memory / retrieval / RAG | `model-the-domain`, `context-poisoning` | `context-is-a-budget`, `never-let-a-summary-be-the-handoff` |
 | Answering from notes or documents | `cite-what-you-claim` | `hold-out-the-tests`, `fresh-context-judges` |
 | Performance or cost | `move-jobs-to-code`, `always-run-the-control` | `measure-then-claim`, `dont-spawn-an-agent-for-a-tiny-job`, `start-low-step-up` |
 | Iterative optimization / hill-climbing | `fix-the-measuring-not-the-results`, `decide-what-good-looks-like-first` | `give-it-hands-and-eyes`, `check-the-judge-too` |
 | Long-running session losing state | `never-let-a-summary-be-the-handoff`, `rules-in-code-not-context` | `label-provenance` |
 | "It's done" with no evidence | `give-it-hands-and-eyes`, `measure-then-claim` | `always-run-the-control`, `decide-what-good-looks-like-first` |
+
+Every principle above has at least one row. When no row fits, name the principle directly: the
+table is the default route, not a whitelist.
 
 ### Non-negotiables
 
@@ -123,19 +128,3 @@ Every principle cites the reel it came from, with a timestamp and a verbatim quo
 `references/provenance.md` maps principle → source → vault path, and lists the transcripts
 mined. Quotes are Kem's words; the rules are the distillation. Where they disagree, the
 quote wins.
-
----
-
----
-
----
-
-## AGENTS.md rule
-
-## Principles
-- Code decides wherever it can. Red is red.
-- The poison sits upstream: fix the source of the bad context, not the symptom.
-- Always run the control.
-- A skill is instructions the model may follow; a hook is code that ALWAYS runs.
-- A gate that cannot fail is not a gate; when a classifier is unsure, it routes to the human, not past it.
-- A judge that shares the author's context is not a judge.

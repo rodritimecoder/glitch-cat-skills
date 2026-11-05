@@ -1,13 +1,13 @@
 ---
 name: kem-thought
 description: >
-  Kem Glitch's thought skills: 31 steering principles distilled from the
+  Kem Glitch's thought skills: 32 steering principles distilled from the
   Glitch Cat Club transcripts, plus the /kem-mode front door. Use when
   building or operating agent systems, harnesses, swarms, memory/retrieval
   layers, evaluation pipelines, or when the operator says "use kem mode",
   "what would kem do", "kem principles", or names a principle
   (e.g. "code decides wherever it can", "the poison sits upstream",
-  "always run the control", "mutate the test").
+  "always run the control", "mutate the test", "fix the measuring not the results").
 ---
 
 # Kem Thought (`kem-thought`)
@@ -15,7 +15,7 @@ description: >
 Kem's Law: **a skill is instructions the model may follow; a hook is code that ALWAYS runs.**
 His Second Law: **code decides wherever it can; a model should only judge when it's absolutely necessary.**
 
-This suite is the thinking layer: 31 steering principles extracted from Kem Glitch's own
+This suite is the thinking layer: 32 steering principles extracted from Kem Glitch's own
 transcripts (all quotes and sources in `references/provenance.md`), plus the voice guide in
 `references/voice.md`. It is the Kem counterpart to Lauren Tan's `pstack` principles — same
 shape, different spine: Lauren steers by subtraction and taste, Kem steers by determinism
@@ -52,7 +52,7 @@ The operator can steer by principle name mid-session. Load that file and obey it
 
 Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-sits-upstream.md`.
 
-### The 31 principles
+### The 32 principles
 
 **The law** — `code-decides` · `move-jobs-to-code` · `these-are-just-software`
 
@@ -68,7 +68,8 @@ Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-
 `context-poisoning` · `the-poison-sits-upstream` · `model-the-domain`
 
 **Evidence** — `decide-what-good-looks-like-first` · `give-it-hands-and-eyes` ·
-`always-run-the-control` · `hold-out-the-tests` · `mutate-the-test` · `measure-then-claim` · `cite-what-you-claim`
+`always-run-the-control` · `hold-out-the-tests` · `mutate-the-test` · `measure-then-claim` · `cite-what-you-claim` ·
+`fix-the-measuring-not-the-results`
 
 **Craft & coordination** — `label-provenance` · `foundations-over-shiny-objects`
 
@@ -83,6 +84,7 @@ Names are the slugs in `principles/`. Load by slug, e.g. `principles/the-poison-
 | Memory / retrieval / RAG | `model-the-domain`, `context-poisoning` | `context-is-a-budget`, `never-let-a-summary-be-the-handoff` |
 | Answering from notes or documents | `cite-what-you-claim` | `hold-out-the-tests`, `fresh-context-judges` |
 | Performance or cost | `move-jobs-to-code`, `always-run-the-control` | `measure-then-claim`, `dont-spawn-an-agent-for-a-tiny-job`, `start-low-step-up` |
+| Iterative optimization / hill-climbing | `fix-the-measuring-not-the-results`, `decide-what-good-looks-like-first` | `give-it-hands-and-eyes`, `check-the-judge-too` |
 | Long-running session losing state | `never-let-a-summary-be-the-handoff`, `rules-in-code-not-context` | `label-provenance` |
 | "It's done" with no evidence | `give-it-hands-and-eyes`, `measure-then-claim` | `always-run-the-control`, `decide-what-good-looks-like-first` |
 

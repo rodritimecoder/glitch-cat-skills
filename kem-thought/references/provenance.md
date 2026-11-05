@@ -44,6 +44,7 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 | `give-it-hands-and-eyes` | Verification: Hands and Eyes | `DfAIPrAtteM` | 00:49 | `2026-10-28_verification_hands_and_eyes` |
 | `cite-what-you-claim` | LLM Wikis vs Plain Claude Code | `DfFSZDvN6oV` | 01:59 | `2026-10-30_karpathy_llm_wikis` |
 | `mutate-the-test` | Do You Even Mutate Tests Bro? | `DfSJyHpNyBe` | 01:55 | `2026-11-03_mutation_testing_for_ai_code` |
+| `fix-the-measuring-not-the-results` | Hill-Climbing Loops: How to Set Them Up Properly | `DfUt_qCNo9c` | 02:23 | `2026-11-04_hill_climbing_loops_lets_begin` |
 
 ## Talks mined
 
@@ -78,6 +79,8 @@ passes through. Where the paraphrase and the quote disagree, the quote wins.
 | `2026-10-25_which_effort_which_model_routing` | Task definition, SWE-bench testing, effort costs, optimistic escalation | `start-low-step-up`, `code-decides` |
 | `2026-10-28_verification_hands_and_eyes` | The trust ladder, hands and eyes, Playwright/DevTools/image diff/Storybook/Sentry, the five questions and the CLI | `give-it-hands-and-eyes` |
 | `2026-10-30_karpathy_llm_wikis` | LLM wikis benchmarked, ICM at baseline cost, the cite-your-source hook (70% → 92.5%) | `cite-what-you-claim`, `measure-then-claim`, `foundations-over-shiny-objects` |
+| `2026-11-03_mutation_testing_for_ai_code` | Mutation testing for AI code, breaking code on purpose, sycophantic test detection | `mutate-the-test`, `hold-out-the-tests`, `always-run-the-control` |
+| `2026-11-04_hill_climbing_loops_lets_begin` | Hill-climbing loops, Anthropic 4 scoring methods, steadiness test, Pareto tension | `fix-the-measuring-not-the-results`, `check-the-judge-too`, `give-it-hands-and-eyes` |
 
 ## Known gaps
 

@@ -1,3 +1,12 @@
+# ⚠️ DEPRECATED & CONSOLIDATED
+
+> [!WARNING]
+> **This repository has been consolidated into the unified [`agent-skills`](https://github.com/rodritimecoder/agent-skills) repository.**
+> All active development, updates, and maintenance have moved to [https://github.com/rodritimecoder/agent-skills](https://github.com/rodritimecoder/agent-skills).
+> Please update your harness mounts, remotes, and dependencies accordingly.
+
+---
+
 # 🐱 Glitch Cat Autonomous Engineering Suite (`glitch-cat-skills`)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
